@@ -5,13 +5,33 @@
 const DEFAULTS = {
     count: 20,
     weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear', weightMult: 1, weightSteps: 100,
-    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingMult: 1, spacingSteps: 100,
+    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingMult: 1, spacingSteps: 100, spacingFit: true,
     length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear', lengthMult: 1, lengthSteps: 100,
     opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear', opacityMult: 1, opacitySteps: 100,
     colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x', colorFadeStart: 0, colorFadeEnd: 100, colorSteps: 100,
     rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
     bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
 };
+
+// Logarithmic Steps Helpers
+function toLogSteps(sliderVal) {
+    if (sliderVal <= 50) return Math.round(map(sliderVal, 0, 50, 1, 20));
+    return Math.round(map(sliderVal, 50, 100, 20, 100));
+}
+function fromLogSteps(stepsVal) {
+    if (stepsVal <= 20) return map(stepsVal, 1, 20, 0, 50);
+    return map(stepsVal, 20, 100, 50, 100);
+}
+
+// Logarithmic Steps Helpers
+function toLogSteps(sliderVal) {
+    if (sliderVal <= 50) return Math.round(map(sliderVal, 0, 50, 1, 20));
+    return Math.round(map(sliderVal, 50, 100, 20, 100));
+}
+function fromLogSteps(stepsVal) {
+    if (stepsVal <= 20) return map(stepsVal, 1, 20, 0, 50);
+    return map(stepsVal, 20, 100, 50, 100);
+}
 
 const defaultColorPresets = [
     { colors: ['#ffffff'], name: 'White' },
@@ -105,7 +125,7 @@ function createLayerFromState() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -154,7 +174,7 @@ function loadLayerToState(layer) {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof layer[p] === 'object') state[p] = { ...layer[p] };
         else state[p] = layer[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
             if (layer[p + s] !== undefined) state[p + s] = layer[p + s];
         });
     });
@@ -175,7 +195,7 @@ function saveStateToActiveLayer() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -238,12 +258,18 @@ function drawLines(layer) {
         positions.push(cumulative);
         cumulative += spacingMult;
     }
-    // Normalize to 0-1 range
+
+    const fit = layer.spacingFit ?? true;
     const maxPos = cumulative - (positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult) : 0);
+    const ABS_UNIT = 40;
 
     for (let i = 0; i < count; i++) {
-        // Fix for Spacing 0: If maxPos is negligible, check if user intended 0 spacing (lines overlapping at start)
-        const tx = maxPos > 0.0001 ? positions[i] / maxPos : 0;
+        let tx;
+        if (fit) {
+            tx = maxPos > 0.0001 ? positions[i] / maxPos : 0;
+        } else {
+            tx = (positions[i] * ABS_UNIT) / w;
+        }
 
         const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
         const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
@@ -511,19 +537,27 @@ function setupFadePosition(param) {
     const steps = document.getElementById(`${param}Steps`);
     const stepsInput = document.getElementById(`${param}StepsInput`);
 
+
+
     if (mult) mult.oninput = () => { state[`${param}Mult`] = parseFloat(mult.value); saveStateToActiveLayer(); };
     if (steps) steps.oninput = () => {
-        state[`${param}Steps`] = parseInt(steps.value);
-        if (stepsInput) stepsInput.value = steps.value;
+        const val = toLogSteps(parseInt(steps.value));
+        state[`${param}Steps`] = val;
+        if (stepsInput) stepsInput.value = val;
         saveStateToActiveLayer();
     };
     if (stepsInput) stepsInput.oninput = () => {
         let val = parseInt(stepsInput.value);
         if (val < 1) val = 1; if (val > 100) val = 100;
         state[`${param}Steps`] = val;
-        if (steps) steps.value = val;
+        if (steps) steps.value = fromLogSteps(val);
         saveStateToActiveLayer();
     };
+
+    if (param === 'spacing') {
+        const fit = document.getElementById('spacingFit');
+        if (fit) fit.onchange = () => { state.spacingFit = fit.checked; saveStateToActiveLayer(); };
+    }
     if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
 }
 
@@ -697,9 +731,13 @@ function syncUIWithState() {
         const steps = document.getElementById(`${p}Steps`);
         const stepsInput = document.getElementById(`${p}StepsInput`);
         if (mult) mult.value = state[`${p}Mult`] ?? 1;
-        if (steps) steps.value = state[`${p}Steps`] ?? 100;
+        if (steps) steps.value = fromLogSteps(state[`${p}Steps`] ?? 100);
         if (stepsInput) stepsInput.value = state[`${p}Steps`] ?? 100;
     });
+    // Spacing Fit Sync
+    const fit = document.getElementById('spacingFit');
+    if (fit) fit.checked = state.spacingFit ?? true;
+
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => {
         const s = document.getElementById(p), i = document.getElementById(`${p}Value`);
         if (s) s.value = state[p];
@@ -710,7 +748,7 @@ function syncUIWithState() {
     const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
     if (cfs) cfs.value = state.colorFadeStart;
     if (cfe) cfe.value = state.colorFadeEnd;
-    if (stepsSlider) stepsSlider.value = state.colorSteps;
+    if (stepsSlider) stepsSlider.value = fromLogSteps(state.colorSteps);
     if (stepsInput) stepsInput.value = state.colorSteps;
     updateColorStops();
     updateColorMode();
@@ -725,6 +763,7 @@ function resetAttribute(param) {
         state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
         state[`${param}Mult`] = DEFAULTS[`${param}Mult`];
         state[`${param}Steps`] = DEFAULTS[`${param}Steps`];
+        if (param === 'spacing') state.spacingFit = DEFAULTS.spacingFit;
     }
     else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) state[param] = DEFAULTS[param];
     else if (param === 'color') { state.colors = [...DEFAULTS.colors]; state.colorMode = 'solid'; }
