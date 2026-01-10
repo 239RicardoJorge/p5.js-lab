@@ -619,16 +619,7 @@ function updateStepsLimit(maxVal) {
     });
 }
 
-if (param === 'spacing') {
-    const fitBtn = document.getElementById('spacingFitBtn');
-    if (fitBtn) fitBtn.onclick = () => {
-        state.spacingFit = !state.spacingFit;
-        syncUIWithState();
-        saveStateToActiveLayer();
-    };
-}
-if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
-}
+
 
 // Color System
 function setupColorSystem() {
