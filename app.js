@@ -249,39 +249,58 @@ function updateLayersUI() {
 // Pattern Renderers
 function drawLines(layer) {
     const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
-    // Calculate spacing-adjusted positions
-    let positions = [];
-    let cumulative = 0;
+
+    // 1. Calculate Weights first (needed for Gap spacing)
+    const weights = [];
     for (let i = 0; i < count; i++) {
-        const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? t : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        positions.push(cumulative);
-        cumulative += spacingMult;
+        const indexT = count > 1 ? i / (count - 1) : 0.5;
+        const axisT = layer.weightAxis === 'x' ? indexT : 0.5;
+        weights.push(getValueWithFade(layer.weight, axisT, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult));
     }
 
+    // 2. Calculate Positions (Gap-based logic)
+    // Position[i] is the CENTER of the element.
+    // Distance between Center[i-1] and Center[i] = (Weight[i-1] / 2) + Gap + (Weight[i] / 2)
+    let positions = [0];
+    let cumulative = 0;
+    const ABS_UNIT = 40; // Base gap unit. Spacing 1 = 40px Gap.
+
+    for (let i = 1; i < count; i++) {
+        const indexT = count > 1 ? i / (count - 1) : 0.5;
+        const gapMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? indexT : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+        const gap = gapMult * ABS_UNIT;
+
+        const dist = (weights[i - 1] / 2) + gap + (weights[i] / 2);
+        cumulative += dist;
+        positions.push(cumulative);
+    }
+
+    const maxCenter = cumulative; // Position of last center (relative to first=0)
     const fit = layer.spacingFit ?? true;
 
-    // Logic for Layout Width
-    // maxPos is the sum of spacings (cumulative) minus the last spacing (which is after the last item)
-    const lastSpacing = positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult) : 0;
-    const maxPos = cumulative - lastSpacing;
-    const ABS_UNIT = 40;
+    // 3. Layout Dimensions & Centering
+    const paddingLeft = weights[0] / 2;
+    const paddingRight = weights[count - 1] / 2;
+    const totalBoundingWidth = maxCenter + paddingLeft + paddingRight;
 
-    // Centering Logic (Fit=False)
-    const totalWidth = fit ? w : maxPos * ABS_UNIT;
-    const startX = fit ? 0 : (w - totalWidth) / 2;
+    let startX = 0;
+    if (!fit) {
+        // Center the Bounding Box in the Canvas
+        const leftEdge = (w - totalBoundingWidth) / 2;
+        startX = leftEdge + paddingLeft;
+    }
 
     for (let i = 0; i < count; i++) {
         const indexT = count > 1 ? i / (count - 1) : 0.5;
         let tx;
+
         if (fit) {
-            tx = maxPos > 0.0001 ? positions[i] / maxPos : 0;
+            tx = maxCenter > 0.0001 ? positions[i] / maxCenter : 0;
         } else {
-            tx = (startX + positions[i] * ABS_UNIT) / w;
+            tx = (startX + positions[i]) / w;
         }
 
-        // Use IndexT for properties if Axis is X ("Fit" behavior for props, creating consistent gradients)
-        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? indexT : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
+        const weight = weights[i];
         const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? indexT : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
         const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? indexT : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? indexT : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
