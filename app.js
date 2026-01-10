@@ -14,23 +14,15 @@ const DEFAULTS = {
 };
 
 // Logarithmic Steps Helpers
-function toLogSteps(sliderVal) {
+function toLogSteps(sliderVal, maxSteps = 100) {
+    if (maxSteps <= 20) return Math.round(map(sliderVal, 0, 100, 1, maxSteps));
     if (sliderVal <= 50) return Math.round(map(sliderVal, 0, 50, 1, 20));
-    return Math.round(map(sliderVal, 50, 100, 20, 100));
+    return Math.round(map(sliderVal, 50, 100, 20, maxSteps));
 }
-function fromLogSteps(stepsVal) {
+function fromLogSteps(stepsVal, maxSteps = 100) {
+    if (maxSteps <= 20) return map(stepsVal, 1, maxSteps, 0, 100);
     if (stepsVal <= 20) return map(stepsVal, 1, 20, 0, 50);
-    return map(stepsVal, 20, 100, 50, 100);
-}
-
-// Logarithmic Steps Helpers
-function toLogSteps(sliderVal) {
-    if (sliderVal <= 50) return Math.round(map(sliderVal, 0, 50, 1, 20));
-    return Math.round(map(sliderVal, 50, 100, 20, 100));
-}
-function fromLogSteps(stepsVal) {
-    if (stepsVal <= 20) return map(stepsVal, 1, 20, 0, 50);
-    return map(stepsVal, 20, 100, 50, 100);
+    return map(stepsVal, 20, maxSteps, 50, 100);
 }
 
 const defaultColorPresets = [
@@ -521,8 +513,18 @@ function initUI() {
 
 function setupSingleControl(param, inputId, sliderId) {
     const input = document.getElementById(inputId), slider = document.getElementById(sliderId);
-    input.oninput = () => { slider.value = input.value; state[param] = parseFloat(input.value); saveStateToActiveLayer(); };
-    slider.oninput = () => { input.value = slider.value; state[param] = parseFloat(slider.value); saveStateToActiveLayer(); };
+    input.oninput = () => {
+        slider.value = input.value;
+        state[param] = parseFloat(input.value);
+        if (param === 'count') updateStepsLimit(state.count);
+        saveStateToActiveLayer();
+    };
+    slider.oninput = () => {
+        input.value = slider.value;
+        state[param] = parseFloat(slider.value);
+        if (param === 'count') updateStepsLimit(state.count);
+        saveStateToActiveLayer();
+    };
 }
 
 function setupRangeControl(param) {
@@ -567,20 +569,20 @@ function setupFadePosition(param) {
     const steps = document.getElementById(`${param}Steps`);
     const stepsInput = document.getElementById(`${param}StepsInput`);
 
-
-
     if (mult) mult.oninput = () => { state[`${param}Mult`] = parseFloat(mult.value); saveStateToActiveLayer(); };
     if (steps) steps.oninput = () => {
-        const val = toLogSteps(parseInt(steps.value));
+        const maxVal = state.count || 100;
+        const val = toLogSteps(parseInt(steps.value), maxVal);
         state[`${param}Steps`] = val;
         if (stepsInput) stepsInput.value = val;
         saveStateToActiveLayer();
     };
     if (stepsInput) stepsInput.oninput = () => {
+        const maxVal = state.count || 100;
         let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > 100) val = 100;
+        if (val < 1) val = 1; if (val > maxVal) val = maxVal;
         state[`${param}Steps`] = val;
-        if (steps) steps.value = fromLogSteps(val);
+        if (steps) steps.value = fromLogSteps(val, maxVal);
         saveStateToActiveLayer();
     };
 
@@ -592,7 +594,40 @@ function setupFadePosition(param) {
             saveStateToActiveLayer();
         };
     }
-    if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
+}
+
+function updateStepsLimit(maxVal) {
+    if (!maxVal) maxVal = 100;
+    ['weight', 'spacing', 'length', 'opacity', 'color'].forEach(p => {
+        const input = document.getElementById(`${p}StepsInput`);
+        const slider = document.getElementById(`${p}Steps`);
+
+        if (input) input.max = maxVal;
+
+        const stepsKey = p === 'color' ? 'colorSteps' : `${p}Steps`;
+        let current = state[stepsKey];
+
+        // Clamp if current exceeds new max
+        if (current > maxVal) {
+            state[stepsKey] = maxVal;
+            current = maxVal;
+            if (input) input.value = current;
+        }
+
+        // Update slider position to reflect current steps within new range
+        if (slider) slider.value = fromLogSteps(current, maxVal);
+    });
+}
+
+if (param === 'spacing') {
+    const fitBtn = document.getElementById('spacingFitBtn');
+    if (fitBtn) fitBtn.onclick = () => {
+        state.spacingFit = !state.spacingFit;
+        syncUIWithState();
+        saveStateToActiveLayer();
+    };
+}
+if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
 }
 
 // Color System
@@ -611,15 +646,17 @@ function setupColorSystem() {
     // Color steps
     const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
     if (stepsSlider) stepsSlider.oninput = () => {
-        state.colorSteps = parseInt(stepsSlider.value);
-        if (stepsInput) stepsInput.value = stepsSlider.value;
+        const maxVal = state.count || 100;
+        state.colorSteps = toLogSteps(parseInt(stepsSlider.value), maxVal);
+        if (stepsInput) stepsInput.value = state.colorSteps;
         saveStateToActiveLayer();
     };
     if (stepsInput) stepsInput.oninput = () => {
+        const maxVal = state.count || 100;
         let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > 100) val = 100;
+        if (val < 1) val = 1; if (val > maxVal) val = maxVal;
         state.colorSteps = val;
-        if (stepsSlider) stepsSlider.value = val;
+        if (stepsSlider) stepsSlider.value = fromLogSteps(val, maxVal);
         saveStateToActiveLayer();
     };
 }
@@ -753,6 +790,9 @@ function syncUIWithState() {
     document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.pattern === state.pattern));
     document.getElementById('countValue').value = state.count;
     document.getElementById('countSlider').value = state.count;
+    // Dynamic Steps Limit Update
+    updateStepsLimit(state.count);
+
     ['weight', 'spacing', 'length', 'opacity'].forEach(p => {
         document.getElementById(`${p}Start`).value = state[p].start;
         document.getElementById(`${p}End`).value = state[p].end;
@@ -765,7 +805,7 @@ function syncUIWithState() {
         const steps = document.getElementById(`${p}Steps`);
         const stepsInput = document.getElementById(`${p}StepsInput`);
         if (mult) mult.value = state[`${p}Mult`] ?? 1;
-        if (steps) steps.value = fromLogSteps(state[`${p}Steps`] ?? 100);
+        if (steps) steps.value = fromLogSteps(state[`${p}Steps`] ?? 100, state.count);
         if (stepsInput) stepsInput.value = state[`${p}Steps`] ?? 100;
     });
     // Spacing Fit Sync
@@ -782,7 +822,7 @@ function syncUIWithState() {
     const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
     if (cfs) cfs.value = state.colorFadeStart;
     if (cfe) cfe.value = state.colorFadeEnd;
-    if (stepsSlider) stepsSlider.value = fromLogSteps(state.colorSteps);
+    if (stepsSlider) stepsSlider.value = fromLogSteps(state.colorSteps, state.count);
     if (stepsInput) stepsInput.value = state.colorSteps;
     updateColorStops();
     updateColorMode();
