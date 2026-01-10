@@ -3,11 +3,11 @@
  */
 
 const DEFAULTS = {
-    count: 20, countRate: 0, countRateCurve: 'sine',
-    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear', weightRate: 0, weightRateCurve: 'sine',
-    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingRate: 0, spacingRateCurve: 'sine',
-    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear', lengthRate: 0, lengthRateCurve: 'sine',
-    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear', opacityRate: 0, opacityRateCurve: 'sine',
+    count: 20,
+    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear',
+    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear',
+    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear',
+    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear',
     colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x',
     rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
     bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
@@ -30,12 +30,12 @@ const defaultBgPresets = [
 ];
 
 const state = {
-    canvas: null, canvasWidth: 800, canvasHeight: 800, time: 0,
+    canvas: null, canvasWidth: 800, canvasHeight: 800,
     pattern: 'lines',
     ...JSON.parse(JSON.stringify(DEFAULTS)),
     colorPresets: [...defaultColorPresets],
     bgPresets: [...defaultBgPresets],
-    layers: [], activeLayerId: null, draggedLayerId: null
+    layers: [], activeLayerId: null
 };
 
 // Utilities
@@ -55,31 +55,11 @@ function applyCurve(t, type) {
     return t;
 }
 
-function getWaveValue(type, phase) {
-    const p = phase % 1;
-    if (type === 'sine') return (Math.sin(p * TWO_PI) + 1) / 2;
-    if (type === 'triangle') return p < 0.5 ? p * 2 : 2 - p * 2;
-    if (type === 'square') return p < 0.5 ? 1 : 0;
-    if (type === 'saw') return p;
-    if (type === 'easeIn') return p * p;
-    if (type === 'easeOut') return 1 - (1 - p) * (1 - p);
-    if (type === 'easeInOut') return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
-    return (Math.sin(p * TWO_PI) + 1) / 2; // default to sine
-}
-
-function getValueWithFade(range, rawT, fs, fe, curve, rate, rateCurve) {
-    let baseStart = range.start, baseEnd = range.end;
-    if (rate > 0) {
-        const wave = getWaveValue(rateCurve, state.time * rate);
-        const mid = (range.start + range.end) / 2;
-        const amp = Math.abs(range.end - range.start) / 2 || mid * 0.5;
-        baseStart = mid + amp * (wave - 0.5);
-        baseEnd = mid - amp * (wave - 0.5);
-    }
+function getValueWithFade(range, rawT, fs, fe, curve) {
     const fStart = fs / 100, fEnd = fe / 100;
-    if (rawT <= fStart) return baseStart;
-    if (rawT >= fEnd) return baseEnd;
-    return lerp(baseStart, baseEnd, applyCurve((rawT - fStart) / (fEnd - fStart), curve));
+    if (rawT <= fStart) return range.start;
+    if (rawT >= fEnd) return range.end;
+    return lerp(range.start, range.end, applyCurve((rawT - fStart) / (fEnd - fStart), curve));
 }
 
 function getGradientColor(colors, t) {
@@ -100,7 +80,7 @@ function createLayerFromState() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -146,7 +126,7 @@ function loadLayerToState(layer) {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof layer[p] === 'object') state[p] = { ...layer[p] };
         else state[p] = layer[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (layer[p + s] !== undefined) state[p + s] = layer[p + s];
         });
     });
@@ -164,7 +144,7 @@ function saveStateToActiveLayer() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -194,11 +174,23 @@ function updateLayersUI() {
 // Pattern Renderers
 function drawLines(layer) {
     const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
+    // Calculate spacing-adjusted positions
+    let positions = [];
+    let cumulative = 0;
     for (let i = 0; i < count; i++) {
-        const tx = count > 1 ? i / (count - 1) : 0.5;
-        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
-        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const t = count > 1 ? i / (count - 1) : 0.5;
+        const spacingMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? t : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
+        positions.push(cumulative);
+        cumulative += spacingMult;
+    }
+    // Normalize to 0-1 range
+    const maxPos = cumulative - (positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve) : 1);
+
+    for (let i = 0; i < count; i++) {
+        const tx = maxPos > 0 ? positions[i] / maxPos : (count > 1 ? i / (count - 1) : 0.5);
+        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5);
         const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
         strokeWeight(max(0.5, weight));
@@ -208,17 +200,19 @@ function drawLines(layer) {
 }
 
 function drawRadial(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, radius = Math.min(w, h) * 0.7;
+    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, radius = Math.min(w, h) * 0.45;
     for (let i = 0; i < count; i++) {
         const t = i / count, angle = t * TWO_PI;
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
-        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-        const innerR = radius * (1 - lengthPct);
-        line(cx + cos(angle) * innerR, cy + sin(angle) * innerR, cx + cos(angle) * radius, cy + sin(angle) * radius);
+        const outerR = radius * spacingMult;
+        const innerR = outerR * (1 - lengthPct);
+        line(cx + cos(angle) * innerR, cy + sin(angle) * innerR, cx + cos(angle) * outerR, cy + sin(angle) * outerR);
     }
 }
 
@@ -226,9 +220,11 @@ function drawCircles(layer) {
     const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, maxR = Math.min(w, h) * 0.45;
     noFill();
     for (let i = 0; i < count; i++) {
-        const t = count > 1 ? i / (count - 1) : 0.5, r = (t * 0.9 + 0.1) * maxR;
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const t = count > 1 ? i / (count - 1) : 0.5;
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
+        const r = (t * 0.9 + 0.1) * maxR * spacingMult;
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -241,17 +237,20 @@ function drawGrid(layer) {
     noFill();
     for (let row = 0; row < gs; row++) {
         for (let col = 0; col < gs; col++) {
+            const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
+            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
             const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
             const lt = getAxisProgress(col, row, gs, gs, layer.lengthAxis);
-            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
+            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
             const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
             strokeWeight(max(0.5, weight));
             stroke(c.r, c.g, c.b, opacityVal / 100 * 255);
-            const x = col * cW, y = row * cH, rw = cW * sizeMult, rh = cH * sizeMult;
+            const rw = cW * sizeMult * spacingMult, rh = cH * sizeMult * spacingMult;
+            const x = col * cW, y = row * cH;
             rect(x + (cW - rw) / 2, y + (cH - rh) / 2, rw, rh);
         }
     }
@@ -262,10 +261,12 @@ function drawDots(layer) {
     noStroke();
     for (let row = 0; row < gs; row++) {
         for (let col = 0; col < gs; col++) {
+            const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
+            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
             const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve) * 2;
+            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve) * 2 * spacingMult;
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
             const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
             fill(c.r, c.g, c.b, opacityVal / 100 * 255);
@@ -279,10 +280,12 @@ function drawTriangle(layer) {
     const topX = w / 2, topY = h * 0.1, leftY = h * 0.9;
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
-        const y = lerp(topY, leftY, t), progress = (y - topY) / (leftY - topY);
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
+        const adjustedT = t * spacingMult;
+        const y = lerp(topY, leftY, Math.min(1, adjustedT)), progress = (y - topY) / (leftY - topY);
         const xLeft = lerp(topX, w * 0.1, progress), xRight = lerp(topX, w * 0.9, progress);
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -334,7 +337,6 @@ function setup() {
 }
 
 function draw() {
-    state.time += deltaTime * 0.001;
     drawBackground();
     state.layers.forEach(layer => { if (layer.visible) renderLayer(layer); });
 }
@@ -353,14 +355,12 @@ function initUI() {
 
     // Count
     setupSingleControl('count', 'countValue', 'countSlider');
-    setupRatePanel('count');
 
     // Range controls
     ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
         setupRangeControl(param);
         setupAxisToggle(param);
         setupFadePosition(param);
-        setupRatePanel(param);
     });
 
     // Colors
@@ -450,18 +450,6 @@ function setupFadePosition(param) {
     if (fs) fs.oninput = () => { state[`${param}FadeStart`] = parseFloat(fs.value); saveStateToActiveLayer(); };
     if (fe) fe.oninput = () => { state[`${param}FadeEnd`] = parseFloat(fe.value); saveStateToActiveLayer(); };
     if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
-}
-
-function setupRatePanel(param) {
-    const btn = document.querySelector(`.rate-btn[data-param="${param}"]`);
-    const panel = document.getElementById(`${param}RatePanel`);
-    const rateInput = document.getElementById(`${param}Rate`);
-    const rateCurve = document.getElementById(`${param}RateCurve`);
-    if (btn && panel) {
-        btn.onclick = () => { btn.classList.toggle('active'); panel.classList.toggle('hidden'); };
-    }
-    if (rateInput) rateInput.oninput = () => { state[`${param}Rate`] = parseFloat(rateInput.value); saveStateToActiveLayer(); };
-    if (rateCurve) rateCurve.onchange = () => { state[`${param}RateCurve`] = rateCurve.value; saveStateToActiveLayer(); };
 }
 
 // Color System
@@ -615,13 +603,6 @@ function syncUIWithState() {
         if (s) s.value = state[p];
         if (i) i.value = state[p];
     });
-    // Sync rate panels
-    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
-        const rateInput = document.getElementById(`${p}Rate`);
-        const rateCurve = document.getElementById(`${p}RateCurve`);
-        if (rateInput) rateInput.value = state[`${p}Rate`] || 0;
-        if (rateCurve) rateCurve.value = state[`${p}RateCurve`] || 'sine';
-    });
     updateColorStops();
     updateColorMode();
 }
@@ -633,7 +614,6 @@ function resetAttribute(param) {
         state[`${param}FadeStart`] = DEFAULTS[`${param}FadeStart`];
         state[`${param}FadeEnd`] = DEFAULTS[`${param}FadeEnd`];
         state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
-        state[`${param}Rate`] = DEFAULTS[`${param}Rate`];
     }
     else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) state[param] = DEFAULTS[param];
     else if (param === 'color') { state.colors = [...DEFAULTS.colors]; state.colorMode = 'solid'; }
@@ -659,7 +639,7 @@ function randomize() {
     state.pattern = patterns[floor(random(patterns.length))];
     state.count = floor(random(10, 60));
     state.weight = { start: random(0.5, 15), end: random(0.5, 15) };
-    state.spacing = { start: random(0.3, 2), end: random(0.3, 2) };
+    state.spacing = { start: random(0.5, 2), end: random(0.5, 2) };
     state.length = { start: random(50, 100), end: random(50, 100) };
     state.opacity = { start: random(60, 100), end: random(60, 100) };
     const preset = state.colorPresets[floor(random(state.colorPresets.length))];
@@ -671,7 +651,7 @@ function randomize() {
 }
 
 function saveProject() {
-    const project = { version: '4.0', resolution: { width: state.canvasWidth, height: state.canvasHeight }, bg: { colors: state.bgColors, mode: state.bgMode, dir: state.bgDir }, layers: state.layers, colorPresets: state.colorPresets, bgPresets: state.bgPresets };
+    const project = { version: '5.0', resolution: { width: state.canvasWidth, height: state.canvasHeight }, bg: { colors: state.bgColors, mode: state.bgMode, dir: state.bgDir }, layers: state.layers, colorPresets: state.colorPresets, bgPresets: state.bgPresets };
     const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
