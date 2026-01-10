@@ -155,18 +155,39 @@ function saveStateToActiveLayer() {
     updateLayersUI();
 }
 
+function moveLayer(id, direction) {
+    const idx = state.layers.findIndex(l => l.id === id);
+    if (idx === -1) return;
+    const newIdx = direction === 'up' ? idx + 1 : idx - 1;
+    if (newIdx < 0 || newIdx >= state.layers.length) return;
+    [state.layers[idx], state.layers[newIdx]] = [state.layers[newIdx], state.layers[idx]];
+    updateLayersUI();
+}
+
 function updateLayersUI() {
     const list = document.getElementById('layersList');
     if (!list) return;
     list.innerHTML = '';
-    [...state.layers].reverse().forEach(layer => {
+    [...state.layers].reverse().forEach((layer, i) => {
+        const realIdx = state.layers.length - 1 - i;
         const item = document.createElement('div');
         item.className = `layer-item${layer.id === state.activeLayerId ? ' active' : ''}`;
-        item.draggable = true;
-        item.innerHTML = `<div class="layer-visibility ${layer.visible ? 'visible' : ''}">${layer.visible ? '◉' : '○'}</div><div class="layer-info"><div class="layer-name">${layer.name}</div><div class="layer-pattern">${layer.pattern}</div></div><button class="layer-delete">×</button>`;
-        item.addEventListener('click', e => { if (!e.target.closest('.layer-visibility, .layer-delete')) selectLayer(layer.id); });
+        item.innerHTML = `
+            <div class="layer-visibility ${layer.visible ? 'visible' : ''}">${layer.visible ? '◉' : '○'}</div>
+            <div class="layer-info">
+                <div class="layer-name">${layer.name}</div>
+                <div class="layer-pattern">${layer.pattern}</div>
+            </div>
+            <div class="layer-arrows">
+                <button class="layer-arrow up" ${realIdx === state.layers.length - 1 ? 'disabled' : ''}>↑</button>
+                <button class="layer-arrow down" ${realIdx === 0 ? 'disabled' : ''}>↓</button>
+            </div>
+            <button class="layer-delete">×</button>`;
+        item.addEventListener('click', e => { if (!e.target.closest('.layer-visibility, .layer-delete, .layer-arrow')) selectLayer(layer.id); });
         item.querySelector('.layer-visibility').onclick = e => { e.stopPropagation(); layer.visible = !layer.visible; updateLayersUI(); };
         item.querySelector('.layer-delete').onclick = e => { e.stopPropagation(); deleteLayer(layer.id); };
+        item.querySelector('.layer-arrow.up').onclick = e => { e.stopPropagation(); moveLayer(layer.id, 'up'); };
+        item.querySelector('.layer-arrow.down').onclick = e => { e.stopPropagation(); moveLayer(layer.id, 'down'); };
         list.appendChild(item);
     });
 }

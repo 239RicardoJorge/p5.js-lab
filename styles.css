@@ -137,17 +137,35 @@ body {
 
 /* Sections */
 .section {
-    padding: 8px 10px;
+    padding: 10px 12px;
     border-bottom: 1px solid var(--border);
+    position: relative;
+}
+
+.section::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 10px;
+    bottom: 10px;
+    width: 3px;
+    background: var(--accent);
+    opacity: 0.3;
+    border-radius: 0 2px 2px 0;
+}
+
+.section:hover::before {
+    opacity: 0.6;
 }
 
 .section-title {
     font-family: var(--font-mono);
-    font-size: 8px;
-    font-weight: 400;
+    font-size: 9px;
+    font-weight: 500;
     letter-spacing: 1.5px;
-    color: var(--text-muted);
-    margin-bottom: 6px;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
 }
 
 .section-title.resetable {
@@ -155,7 +173,7 @@ body {
 }
 
 .section-title.resetable:hover {
-    color: var(--text-secondary);
+    color: var(--accent);
 }
 
 .attr-header {
@@ -829,32 +847,30 @@ body {
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 6px;
+    padding: 6px 8px;
     background: var(--bg-input);
     border: 1px solid var(--border);
-    border-radius: 2px;
-    margin-bottom: 2px;
-    cursor: grab;
+    border-radius: 3px;
+    margin-bottom: 3px;
+    cursor: pointer;
     user-select: none;
+    transition: all 0.15s ease;
+}
+
+.layer-item:hover {
+    background: var(--bg-hover);
 }
 
 .layer-item.active {
-    border-color: var(--text-primary);
-}
-
-.layer-item.dragging {
-    opacity: 0.5;
-}
-
-.layer-item.drag-over {
     border-color: var(--accent);
+    background: rgba(255, 107, 53, 0.1);
 }
 
 .layer-visibility {
-    font-size: 8px;
+    font-size: 10px;
     color: var(--text-muted);
     cursor: pointer;
-    width: 12px;
+    width: 14px;
 }
 
 .layer-visibility.visible {
@@ -867,27 +883,60 @@ body {
 }
 
 .layer-name {
-    font-size: 9px;
+    font-size: 10px;
+    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
 
 .layer-pattern {
-    font-size: 7px;
+    font-size: 8px;
     color: var(--text-muted);
     font-family: var(--font-mono);
+    text-transform: uppercase;
+}
+
+.layer-arrows {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+}
+
+.layer-arrow {
+    width: 14px;
+    height: 11px;
+    background: var(--bg-app);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-muted);
+    font-size: 8px;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.layer-arrow:hover:not(:disabled) {
+    background: var(--accent);
+    color: var(--bg-app);
+    border-color: var(--accent);
+}
+
+.layer-arrow:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 .layer-delete {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
     background: transparent;
     border: none;
     color: var(--text-muted);
-    font-size: 10px;
+    font-size: 12px;
     cursor: pointer;
     opacity: 0;
+    margin-left: 2px;
 }
 
 .layer-item:hover .layer-delete {
