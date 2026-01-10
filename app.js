@@ -1,6 +1,6 @@
 /**
  * VECTOR.LAB — 80s Pattern Generator
- * With multi-axis effects, multi-color gradients, and fade position control
+ * With axis effects, fade positions, and color presets
  */
 
 // =========================================
@@ -52,7 +52,6 @@ const state = {
     canvas: null,
     canvasWidth: 800,
     canvasHeight: 800,
-    time: 0,
 
     pattern: 'lines',
 
@@ -121,7 +120,6 @@ function lerpColor3(c1, c2, t) {
     };
 }
 
-// Curve functions
 function applyCurve(t, curveType) {
     switch (curveType) {
         case 'easeIn': return t * t;
@@ -131,11 +129,7 @@ function applyCurve(t, curveType) {
     }
 }
 
-// Get value with fade position
-// fadeStart/fadeEnd define where the transition happens (0-100)
-// Before fadeStart: use start value
-// After fadeEnd: use end value
-// Between: interpolate with curve
+// Get value with fade: before fadeStart = min, after fadeEnd = max, between = interpolate
 function getValueWithFade(range, rawT, fadeStart, fadeEnd, curve) {
     const fs = fadeStart / 100;
     const fe = fadeEnd / 100;
@@ -148,7 +142,6 @@ function getValueWithFade(range, rawT, fadeStart, fadeEnd, curve) {
     return lerp(range.start, range.end, curved);
 }
 
-// Get color from multi-stop gradient
 function getGradientColor(colors, t) {
     if (colors.length === 1) return hexToRgb(colors[0]);
 
@@ -162,15 +155,13 @@ function getGradientColor(colors, t) {
     return lerpColor3(hexToRgb(colors[i1]), hexToRgb(colors[i2]), localT);
 }
 
-// Calculate progress based on axis and position
-function getAxisProgress(i, j, countX, countY, axis) {
-    const tx = countX > 1 ? i / (countX - 1) : 0.5;
-    const ty = countY > 1 ? j / (countY - 1) : 0.5;
+function getAxisProgress(col, row, countX, countY, axis) {
+    const tx = countX > 1 ? col / (countX - 1) : 0.5;
+    const ty = countY > 1 ? row / (countY - 1) : 0.5;
 
     if (axis === 'x') return tx;
     if (axis === 'y') return ty;
-    // Both X and Y (diagonal)
-    return (tx + ty) / 2;
+    return (tx + ty) / 2; // XY diagonal
 }
 
 // =========================================
@@ -345,7 +336,6 @@ function updateLayersUI() {
             deleteLayer(layer.id);
         });
 
-        // Drag and drop
         item.addEventListener('dragstart', () => {
             state.draggedLayerId = layer.id;
             item.classList.add('dragging');
@@ -390,17 +380,16 @@ function drawLines(layer) {
     for (let i = 0; i < count; i++) {
         const tx = count > 1 ? i / (count - 1) : 0.5;
 
-        // Get values based on their respective axes
-        const wt = layer.weightAxis === 'x' ? tx : 0.5;
+        const wt = layer.weightAxis === 'x' ? tx : layer.weightAxis === 'y' ? 0.5 : tx;
         const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
 
-        const lt = layer.lengthAxis === 'x' ? tx : 0.5;
+        const lt = layer.lengthAxis === 'x' ? tx : layer.lengthAxis === 'y' ? 0.5 : tx;
         const lengthPct = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
 
-        const ot = layer.opacityAxis === 'x' ? tx : 0.5;
+        const ot = layer.opacityAxis === 'x' ? tx : layer.opacityAxis === 'y' ? 0.5 : tx;
         const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
 
-        const ct = layer.colorAxis === 'x' ? tx : 0.5;
+        const ct = layer.colorAxis === 'x' ? tx : layer.colorAxis === 'y' ? 0.5 : tx;
         const col = getGradientColor(layer.colors, ct);
 
         const x = tx * w;
@@ -433,12 +422,7 @@ function drawRadial(layer) {
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
 
         const innerR = radius * (1 - lengthPct);
-        line(
-            cx + cos(angle) * innerR,
-            cy + sin(angle) * innerR,
-            cx + cos(angle) * radius,
-            cy + sin(angle) * radius
-        );
+        line(cx + cos(angle) * innerR, cy + sin(angle) * innerR, cx + cos(angle) * radius, cy + sin(angle) * radius);
     }
 }
 
@@ -469,7 +453,7 @@ function drawCircles(layer) {
 function drawGrid(layer) {
     const w = state.canvasWidth;
     const h = state.canvasHeight;
-    const gridSize = Math.round(sqrt(layer.count));
+    const gridSize = Math.max(2, Math.round(sqrt(layer.count)));
     const cellW = w / gridSize;
     const cellH = h / gridSize;
 
@@ -477,9 +461,6 @@ function drawGrid(layer) {
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
-            const tx = gridSize > 1 ? col / (gridSize - 1) : 0.5;
-            const ty = gridSize > 1 ? row / (gridSize - 1) : 0.5;
-
             const wt = getAxisProgress(col, row, gridSize, gridSize, layer.weightAxis);
             const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
 
@@ -508,7 +489,7 @@ function drawGrid(layer) {
 function drawDots(layer) {
     const w = state.canvasWidth;
     const h = state.canvasHeight;
-    const gridSize = Math.round(sqrt(layer.count));
+    const gridSize = Math.max(2, Math.round(sqrt(layer.count)));
     const cellW = w / gridSize;
     const cellH = h / gridSize;
 
@@ -598,15 +579,13 @@ function drawBackground() {
         background(c.r, c.g, c.b);
     } else if (state.bgDir === 'vertical') {
         for (let y = 0; y < h; y++) {
-            const t = y / h;
-            const c = getGradientColor(colors, t);
+            const c = getGradientColor(colors, y / h);
             stroke(c.r, c.g, c.b);
             line(0, y, w, y);
         }
     } else if (state.bgDir === 'horizontal') {
         for (let x = 0; x < w; x++) {
-            const t = x / w;
-            const c = getGradientColor(colors, t);
+            const c = getGradientColor(colors, x / w);
             stroke(c.r, c.g, c.b);
             line(x, 0, x, h);
         }
@@ -616,8 +595,7 @@ function drawBackground() {
         const cy = h / 2;
         noStroke();
         for (let r = maxR; r > 0; r -= 2) {
-            const t = 1 - r / maxR;
-            const c = getGradientColor(colors, t);
+            const c = getGradientColor(colors, 1 - r / maxR);
             fill(c.r, c.g, c.b);
             circle(cx, cy, r * 2);
         }
@@ -644,7 +622,6 @@ function setup() {
 }
 
 function draw() {
-    state.time += deltaTime * 0.001;
     drawBackground();
     state.layers.forEach(layer => {
         if (layer.visible) renderLayer(layer);
@@ -669,22 +646,22 @@ function initUI() {
     // Count
     setupSingleControl('count', 'countValue', 'countSlider');
 
-    // Range controls with fade positions
+    // Range controls
     ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
         setupRangeControl(param);
         setupAxisToggle(param);
         setupFadePosition(param);
     });
 
-    // Colors
-    setupColorSystem('colorStops', 'gradientBar', 'addColorBtn', 'colors', 'color');
+    // Color axis toggle
     setupAxisToggle('color');
 
     // Color presets
-    document.querySelectorAll('.color-preset').forEach(btn => {
+    document.querySelectorAll('#colorPresets .color-preset').forEach(btn => {
         btn.addEventListener('click', () => {
+            document.querySelectorAll('#colorPresets .color-preset').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
             state.colors = btn.dataset.colors.split(',');
-            updateColorUI();
             saveStateToActiveLayer();
         });
     });
@@ -708,19 +685,20 @@ function initUI() {
         }
     });
 
-    // Background
-    setupColorSystem('bgColorStops', 'bgGradientBar', 'addBgColorBtn', 'bgColors', 'bg');
-
-    document.querySelectorAll('.bg-gradient-dir .dir-btn').forEach(btn => {
+    // Background presets
+    document.querySelectorAll('#bgPresets .bg-preset').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.bg-gradient-dir .dir-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('#bgPresets .bg-preset').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
+            state.bgColors = btn.dataset.colors.split(',');
             state.bgDir = btn.dataset.dir;
         });
     });
 
     // Resolution
     document.getElementById('resApply').addEventListener('click', applyResolution);
+    document.getElementById('resWidth').addEventListener('keydown', e => { if (e.key === 'Enter') applyResolution(); });
+    document.getElementById('resHeight').addEventListener('keydown', e => { if (e.key === 'Enter') applyResolution(); });
 
     // Double-click reset
     document.querySelectorAll('.resetable').forEach(el => {
@@ -743,10 +721,6 @@ function initUI() {
         if (e.code === 'Space') { e.preventDefault(); randomize(); }
         if (e.code === 'KeyR') resetAll();
     });
-
-    // Initialize color UIs
-    updateColorUI();
-    updateBgColorUI();
 }
 
 function setupSingleControl(param, inputId, sliderId) {
@@ -798,43 +772,33 @@ function setupRangeControl(param) {
 }
 
 function setupAxisToggle(param) {
-    const container = document.querySelector(`[data-param="${param}"]`)?.closest('.section') ||
-        document.querySelector(`.section-title[data-reset="${param}"]`)?.closest('.section');
-    if (!container) return;
+    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
+    if (!toggle) return;
 
-    const buttons = container.querySelectorAll('.axis-btn');
+    const buttons = toggle.querySelectorAll('.axis-btn');
     buttons.forEach(btn => {
         btn.addEventListener('click', () => {
-            // Toggle: if already active, add the other axis (XY mode)
-            const currentAxis = state[`${param}Axis`];
             const clickedAxis = btn.dataset.axis;
+            const currentAxis = state[`${param}Axis`];
 
-            if (currentAxis === clickedAxis) {
-                // Already selected, do nothing
-                return;
-            } else if (currentAxis === 'xy') {
-                // From XY, go to the unclicked one
-                state[`${param}Axis`] = clickedAxis === 'x' ? 'y' : 'x';
-            } else if (buttons.length === 2) {
-                const otherBtn = Array.from(buttons).find(b => b !== btn);
-                if (otherBtn.classList.contains('active')) {
-                    // Both will be active = XY
+            // If clicking already active one, try to enable both (XY)
+            if (btn.classList.contains('active')) {
+                // Count active buttons
+                const activeCount = toggle.querySelectorAll('.axis-btn.active').length;
+                if (activeCount === 1) {
+                    // Add the other
                     state[`${param}Axis`] = 'xy';
+                    buttons.forEach(b => b.classList.add('active'));
                 } else {
-                    state[`${param}Axis`] = clickedAxis;
+                    // Deselect this one
+                    btn.classList.remove('active');
+                    state[`${param}Axis`] = clickedAxis === 'x' ? 'y' : 'x';
                 }
             } else {
+                // Activate this one
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
                 state[`${param}Axis`] = clickedAxis;
-            }
-
-            // Update UI
-            buttons.forEach(b => b.classList.remove('active'));
-            if (state[`${param}Axis`] === 'xy') {
-                buttons.forEach(b => b.classList.add('active'));
-            } else {
-                buttons.forEach(b => {
-                    if (b.dataset.axis === state[`${param}Axis`]) b.classList.add('active');
-                });
             }
 
             saveStateToActiveLayer();
@@ -869,101 +833,14 @@ function setupFadePosition(param) {
     }
 }
 
-function setupColorSystem(stopsId, barId, addBtnId, stateKey, prefix) {
-    const addBtn = document.getElementById(addBtnId);
-    if (addBtn) {
-        addBtn.addEventListener('click', () => {
-            state[stateKey].push('#ffffff');
-            if (stateKey === 'colors') updateColorUI();
-            else updateBgColorUI();
-            saveStateToActiveLayer();
-        });
-    }
-}
-
-function updateColorUI() {
-    const container = document.getElementById('colorStops');
-    const bar = document.getElementById('gradientBar');
-    if (!container) return;
-
-    container.innerHTML = '';
-    state.colors.forEach((color, i) => {
-        const stop = document.createElement('div');
-        stop.className = 'color-stop';
-        stop.innerHTML = `
-            <input type="color" value="${color}">
-            ${state.colors.length > 1 ? '<button class="remove-color">×</button>' : ''}
-        `;
-
-        stop.querySelector('input').addEventListener('input', (e) => {
-            state.colors[i] = e.target.value;
-            updateGradientBar(bar, state.colors);
-            saveStateToActiveLayer();
-        });
-
-        const removeBtn = stop.querySelector('.remove-color');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                state.colors.splice(i, 1);
-                updateColorUI();
-                saveStateToActiveLayer();
-            });
-        }
-
-        container.appendChild(stop);
-    });
-
-    updateGradientBar(bar, state.colors);
-}
-
-function updateBgColorUI() {
-    const container = document.getElementById('bgColorStops');
-    const bar = document.getElementById('bgGradientBar');
-    if (!container) return;
-
-    container.innerHTML = '';
-    state.bgColors.forEach((color, i) => {
-        const stop = document.createElement('div');
-        stop.className = 'color-stop';
-        stop.innerHTML = `
-            <input type="color" value="${color}">
-            ${state.bgColors.length > 1 ? '<button class="remove-color">×</button>' : ''}
-        `;
-
-        stop.querySelector('input').addEventListener('input', (e) => {
-            state.bgColors[i] = e.target.value;
-            updateGradientBar(bar, state.bgColors);
-        });
-
-        const removeBtn = stop.querySelector('.remove-color');
-        if (removeBtn) {
-            removeBtn.addEventListener('click', () => {
-                state.bgColors.splice(i, 1);
-                updateBgColorUI();
-            });
-        }
-
-        container.appendChild(stop);
-    });
-
-    updateGradientBar(bar, state.bgColors);
-}
-
-function updateGradientBar(bar, colors) {
-    if (!bar) return;
-    if (colors.length === 1) {
-        bar.style.background = colors[0];
-    } else {
-        bar.style.background = `linear-gradient(90deg, ${colors.join(', ')})`;
-    }
-}
-
 function applyResolution() {
     const w = parseInt(document.getElementById('resWidth').value) || 800;
     const h = parseInt(document.getElementById('resHeight').value) || 800;
     state.canvasWidth = constrain(w, 100, 4000);
     state.canvasHeight = constrain(h, 100, 4000);
     resizeCanvas(state.canvasWidth, state.canvasHeight);
+    document.getElementById('resWidth').value = state.canvasWidth;
+    document.getElementById('resHeight').value = state.canvasHeight;
 }
 
 function syncUIWithState() {
@@ -978,9 +855,6 @@ function syncUIWithState() {
 
     // Ranges
     ['weight', 'spacing', 'length', 'opacity'].forEach(syncRange);
-
-    // Colors
-    updateColorUI();
 
     // Transform
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(param => {
@@ -1017,6 +891,19 @@ function syncRange(param) {
         rangeEl.style.left = `${Math.min(startPct, endPct)}%`;
         rangeEl.style.right = `${100 - Math.max(startPct, endPct)}%`;
     }
+
+    // Sync axis toggle
+    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
+    if (toggle) {
+        toggle.querySelectorAll('.axis-btn').forEach(btn => {
+            const axis = state[`${param}Axis`];
+            if (axis === 'xy') {
+                btn.classList.add('active');
+            } else {
+                btn.classList.toggle('active', btn.dataset.axis === axis);
+            }
+        });
+    }
 }
 
 function resetAttribute(param) {
@@ -1026,6 +913,7 @@ function resetAttribute(param) {
         state[`${param}FadeStart`] = DEFAULTS[`${param}FadeStart`];
         state[`${param}FadeEnd`] = DEFAULTS[`${param}FadeEnd`];
         state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
+        state[`${param}Axis`] = DEFAULTS[`${param}Axis`];
     }
     else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) {
         state[param] = DEFAULTS[param];
@@ -1035,6 +923,7 @@ function resetAttribute(param) {
     }
     else if (param === 'bg') {
         state.bgColors = [...DEFAULTS.bgColors];
+        state.bgDir = DEFAULTS.bgDir;
     }
 
     syncUIWithState();
@@ -1052,8 +941,11 @@ function resetAll() {
         }
     });
     syncUIWithState();
-    updateBgColorUI();
     saveStateToActiveLayer();
+
+    // Reset UI presets
+    document.querySelectorAll('.color-preset').forEach((btn, i) => btn.classList.toggle('active', i === 0));
+    document.querySelectorAll('.bg-preset').forEach((btn, i) => btn.classList.toggle('active', i === 0));
 }
 
 function randomize() {
@@ -1073,14 +965,12 @@ function randomize() {
         state[`${param}Axis`] = random() > 0.5 ? 'x' : 'y';
     });
 
-    const palettes = [
-        ['#ffffff'],
-        ['#ff6b35', '#ff3366'],
-        ['#ff3366', '#00d4ff'],
-        ['#00d4ff', '#ffffff'],
-        ['#ffcc00', '#ff6b35', '#ff3366']
-    ];
-    state.colors = [...palettes[floor(random(palettes.length))]];
+    // Pick random color preset
+    const presets = document.querySelectorAll('#colorPresets .color-preset');
+    const randomPreset = presets[floor(random(presets.length))];
+    state.colors = randomPreset.dataset.colors.split(',');
+    presets.forEach(b => b.classList.remove('active'));
+    randomPreset.classList.add('active');
 
     if (random() > 0.6) {
         state.rotX = floor(random(-45, 45));
@@ -1101,7 +991,7 @@ function randomize() {
 
 function saveProject() {
     const project = {
-        version: '3.0',
+        version: '3.1',
         resolution: { width: state.canvasWidth, height: state.canvasHeight },
         bg: { colors: state.bgColors, dir: state.bgDir },
         layers: state.layers.map(l => ({ ...l }))
@@ -1134,7 +1024,6 @@ function loadProject(e) {
             if (project.bg) {
                 state.bgColors = project.bg.colors || ['#000000'];
                 state.bgDir = project.bg.dir || 'solid';
-                updateBgColorUI();
             }
 
             if (project.layers && project.layers.length > 0) {
