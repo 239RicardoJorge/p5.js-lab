@@ -96,24 +96,36 @@
             <section class="section">
                 <div class="attr-header">
                     <h3 class="section-title resetable" data-reset="count">QUANTIDADE</h3>
-                    <div class="rate-control">
-                        <span class="rate-label resetable" data-reset="countRate">Rate</span>
-                        <input type="number" class="rate-input" id="countRate" value="0" step="0.1" min="-10" max="10">
+                    <div class="anim-toggle" data-param="count">
+                        <button class="anim-btn" title="Animação">⟳</button>
                     </div>
                 </div>
                 <div class="single-control" data-param="count">
                     <input type="number" class="value-input" id="countValue" value="20" min="2" max="200">
                     <input type="range" class="slider" id="countSlider" min="2" max="200" value="20">
                 </div>
+                <div class="anim-panel hidden" id="countAnimPanel">
+                    <div class="anim-row">
+                        <select class="anim-wave" id="countWave">
+                            <option value="sine">Sine</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="square">Square</option>
+                            <option value="saw">Saw</option>
+                        </select>
+                        <input type="number" class="anim-input" id="countAmp" value="0" min="0" max="100"
+                            title="Amplitude %">
+                        <input type="number" class="anim-input" id="countFreq" value="1" min="0.1" max="10" step="0.1"
+                            title="Frequência">
+                    </div>
+                </div>
             </section>
 
-            <!-- Espessura (range) -->
+            <!-- Espessura (range with curve) -->
             <section class="section">
                 <div class="attr-header">
                     <h3 class="section-title resetable" data-reset="weight">ESPESSURA</h3>
-                    <div class="rate-control">
-                        <span class="rate-label resetable" data-reset="weightRate">Rate</span>
-                        <input type="number" class="rate-input" id="weightRate" value="0" step="0.1" min="-10" max="10">
+                    <div class="anim-toggle" data-param="weight">
+                        <button class="anim-btn" title="Animação">⟳</button>
                     </div>
                 </div>
                 <div class="range-control" data-param="weight">
@@ -132,17 +144,42 @@
                         <div class="slider-track"></div>
                         <div class="slider-range" id="weightRange"></div>
                     </div>
+                    <div class="curve-row">
+                        <label>Curva:</label>
+                        <select class="curve-select" id="weightCurve">
+                            <option value="linear">Linear</option>
+                            <option value="easeIn">Ease In</option>
+                            <option value="easeOut">Ease Out</option>
+                            <option value="easeInOut">Ease In-Out</option>
+                            <option value="step">Step</option>
+                        </select>
+                        <label>Pos:</label>
+                        <input type="range" class="pos-slider" id="weightPos" min="0" max="100" value="50"
+                            title="Posição do ponto médio">
+                    </div>
+                </div>
+                <div class="anim-panel hidden" id="weightAnimPanel">
+                    <div class="anim-row">
+                        <select class="anim-wave" id="weightWave">
+                            <option value="sine">Sine</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="square">Square</option>
+                            <option value="saw">Saw</option>
+                        </select>
+                        <input type="number" class="anim-input" id="weightAmp" value="0" min="0" max="100"
+                            title="Amplitude %">
+                        <input type="number" class="anim-input" id="weightFreq" value="1" min="0.1" max="10" step="0.1"
+                            title="Frequência">
+                    </div>
                 </div>
             </section>
 
-            <!-- Espaçamento (range) -->
+            <!-- Espaçamento -->
             <section class="section">
                 <div class="attr-header">
                     <h3 class="section-title resetable" data-reset="spacing">ESPAÇAMENTO</h3>
-                    <div class="rate-control">
-                        <span class="rate-label resetable" data-reset="spacingRate">Rate</span>
-                        <input type="number" class="rate-input" id="spacingRate" value="0" step="0.1" min="-10"
-                            max="10">
+                    <div class="anim-toggle" data-param="spacing">
+                        <button class="anim-btn" title="Animação">⟳</button>
                     </div>
                 </div>
                 <div class="range-control" data-param="spacing">
@@ -161,16 +198,40 @@
                         <div class="slider-track"></div>
                         <div class="slider-range" id="spacingRange"></div>
                     </div>
+                    <div class="curve-row">
+                        <label>Curva:</label>
+                        <select class="curve-select" id="spacingCurve">
+                            <option value="linear">Linear</option>
+                            <option value="easeIn">Ease In</option>
+                            <option value="easeOut">Ease Out</option>
+                            <option value="easeInOut">Ease In-Out</option>
+                            <option value="step">Step</option>
+                        </select>
+                        <label>Pos:</label>
+                        <input type="range" class="pos-slider" id="spacingPos" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div class="anim-panel hidden" id="spacingAnimPanel">
+                    <div class="anim-row">
+                        <select class="anim-wave" id="spacingWave">
+                            <option value="sine">Sine</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="square">Square</option>
+                            <option value="saw">Saw</option>
+                        </select>
+                        <input type="number" class="anim-input" id="spacingAmp" value="0" min="0" max="100">
+                        <input type="number" class="anim-input" id="spacingFreq" value="1" min="0.1" max="10"
+                            step="0.1">
+                    </div>
                 </div>
             </section>
 
-            <!-- Comprimento (range) -->
+            <!-- Comprimento -->
             <section class="section">
                 <div class="attr-header">
                     <h3 class="section-title resetable" data-reset="length">COMPRIMENTO</h3>
-                    <div class="rate-control">
-                        <span class="rate-label resetable" data-reset="lengthRate">Rate</span>
-                        <input type="number" class="rate-input" id="lengthRate" value="0" step="0.1" min="-10" max="10">
+                    <div class="anim-toggle" data-param="length">
+                        <button class="anim-btn" title="Animação">⟳</button>
                     </div>
                 </div>
                 <div class="range-control" data-param="length">
@@ -187,17 +248,39 @@
                         <div class="slider-track"></div>
                         <div class="slider-range" id="lengthRange"></div>
                     </div>
+                    <div class="curve-row">
+                        <label>Curva:</label>
+                        <select class="curve-select" id="lengthCurve">
+                            <option value="linear">Linear</option>
+                            <option value="easeIn">Ease In</option>
+                            <option value="easeOut">Ease Out</option>
+                            <option value="easeInOut">Ease In-Out</option>
+                            <option value="step">Step</option>
+                        </select>
+                        <label>Pos:</label>
+                        <input type="range" class="pos-slider" id="lengthPos" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div class="anim-panel hidden" id="lengthAnimPanel">
+                    <div class="anim-row">
+                        <select class="anim-wave" id="lengthWave">
+                            <option value="sine">Sine</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="square">Square</option>
+                            <option value="saw">Saw</option>
+                        </select>
+                        <input type="number" class="anim-input" id="lengthAmp" value="0" min="0" max="100">
+                        <input type="number" class="anim-input" id="lengthFreq" value="1" min="0.1" max="10" step="0.1">
+                    </div>
                 </div>
             </section>
 
-            <!-- Opacidade (range) -->
+            <!-- Opacidade -->
             <section class="section">
                 <div class="attr-header">
                     <h3 class="section-title resetable" data-reset="opacity">OPACIDADE</h3>
-                    <div class="rate-control">
-                        <span class="rate-label resetable" data-reset="opacityRate">Rate</span>
-                        <input type="number" class="rate-input" id="opacityRate" value="0" step="0.1" min="-10"
-                            max="10">
+                    <div class="anim-toggle" data-param="opacity">
+                        <button class="anim-btn" title="Animação">⟳</button>
                     </div>
                 </div>
                 <div class="range-control" data-param="opacity">
@@ -214,6 +297,31 @@
                         <div class="slider-track"></div>
                         <div class="slider-range" id="opacityRange"></div>
                     </div>
+                    <div class="curve-row">
+                        <label>Curva:</label>
+                        <select class="curve-select" id="opacityCurve">
+                            <option value="linear">Linear</option>
+                            <option value="easeIn">Ease In</option>
+                            <option value="easeOut">Ease Out</option>
+                            <option value="easeInOut">Ease In-Out</option>
+                            <option value="step">Step</option>
+                        </select>
+                        <label>Pos:</label>
+                        <input type="range" class="pos-slider" id="opacityPos" min="0" max="100" value="50">
+                    </div>
+                </div>
+                <div class="anim-panel hidden" id="opacityAnimPanel">
+                    <div class="anim-row">
+                        <select class="anim-wave" id="opacityWave">
+                            <option value="sine">Sine</option>
+                            <option value="triangle">Triangle</option>
+                            <option value="square">Square</option>
+                            <option value="saw">Saw</option>
+                        </select>
+                        <input type="number" class="anim-input" id="opacityAmp" value="0" min="0" max="100">
+                        <input type="number" class="anim-input" id="opacityFreq" value="1" min="0.1" max="10"
+                            step="0.1">
+                    </div>
                 </div>
             </section>
 
@@ -227,12 +335,10 @@
                     </div>
                 </div>
 
-                <!-- Solid Color -->
                 <div class="color-solid" id="colorSolidUI">
                     <input type="color" class="color-input-large" id="colorSolid" value="#ffffff">
                 </div>
 
-                <!-- Fade Color -->
                 <div class="color-fade hidden" id="colorFadeUI">
                     <div class="color-gradient-row">
                         <input type="color" class="color-input" id="colorStart" value="#ffffff">
@@ -283,7 +389,13 @@
                 </div>
 
                 <div class="toolbar-center">
-                    <span class="coordinates" id="coords">800 × 800</span>
+                    <div class="resolution-control">
+                        <input type="number" class="res-input" id="resWidth" value="800" min="100" max="4000" step="50">
+                        <span>×</span>
+                        <input type="number" class="res-input" id="resHeight" value="800" min="100" max="4000"
+                            step="50">
+                        <button class="res-apply" id="resApply" title="Aplicar">↵</button>
+                    </div>
                 </div>
 
                 <div class="toolbar-right">
@@ -368,20 +480,16 @@
                     </div>
                 </div>
 
-                <!-- Solid BG -->
                 <div class="bg-solid" id="bgSolidUI">
                     <div class="bg-presets">
-                        <button class="bg-btn active" data-color="#000000" style="background:#000"
-                            title="Preto"></button>
-                        <button class="bg-btn" data-color="#ffffff" style="background:#fff" title="Branco"></button>
-                        <button class="bg-btn" data-color="#f5f0e8" style="background:#f5f0e8" title="Creme"></button>
-                        <button class="bg-btn" data-color="#1a1a2e" style="background:#1a1a2e"
-                            title="Azul Escuro"></button>
-                        <input type="color" class="bg-custom" id="bgSolidColor" value="#000000" title="Personalizado">
+                        <button class="bg-btn active" data-color="#000000" style="background:#000"></button>
+                        <button class="bg-btn" data-color="#ffffff" style="background:#fff"></button>
+                        <button class="bg-btn" data-color="#f5f0e8" style="background:#f5f0e8"></button>
+                        <button class="bg-btn" data-color="#1a1a2e" style="background:#1a1a2e"></button>
+                        <input type="color" class="bg-custom" id="bgSolidColor" value="#000000">
                     </div>
                 </div>
 
-                <!-- Fade BG -->
                 <div class="bg-fade hidden" id="bgFadeUI">
                     <div class="color-gradient-row">
                         <input type="color" class="color-input" id="bgStart" value="#000000">
@@ -389,9 +497,9 @@
                         <input type="color" class="color-input" id="bgEnd" value="#1a1a2e">
                     </div>
                     <div class="bg-gradient-dir">
-                        <button class="dir-btn active" data-dir="vertical" title="Vertical">↓</button>
-                        <button class="dir-btn" data-dir="horizontal" title="Horizontal">→</button>
-                        <button class="dir-btn" data-dir="radial" title="Radial">◎</button>
+                        <button class="dir-btn active" data-dir="vertical">↓</button>
+                        <button class="dir-btn" data-dir="horizontal">→</button>
+                        <button class="dir-btn" data-dir="radial">◎</button>
                     </div>
                 </div>
             </section>

@@ -1,34 +1,45 @@
 /**
  * VECTOR.LAB — 80s Pattern Generator
- * Full-featured pattern generator with range controls,
- * rates/animation, and comprehensive export options
+ * Advanced pattern generator with animation curves,
+ * draggable layers, and customizable resolution
  */
 
 // =========================================
-// Default Values (for reset)
+// Default Values
 // =========================================
 
 const DEFAULTS = {
     count: 20,
-    countRate: 0,
     weight: { start: 2, end: 2 },
-    weightRate: 0,
     spacing: { start: 1, end: 1 },
-    spacingRate: 0,
     length: { start: 100, end: 100 },
-    lengthRate: 0,
     opacity: { start: 100, end: 100 },
-    opacityRate: 0,
+
+    // Curve and position for each range attr
+    weightCurve: 'linear',
+    weightPos: 50,
+    spacingCurve: 'linear',
+    spacingPos: 50,
+    lengthCurve: 'linear',
+    lengthPos: 50,
+    opacityCurve: 'linear',
+    opacityPos: 50,
+
+    // Animation params
+    countAnim: { wave: 'sine', amp: 0, freq: 1 },
+    weightAnim: { wave: 'sine', amp: 0, freq: 1 },
+    spacingAnim: { wave: 'sine', amp: 0, freq: 1 },
+    lengthAnim: { wave: 'sine', amp: 0, freq: 1 },
+    opacityAnim: { wave: 'sine', amp: 0, freq: 1 },
+
     colorMode: 'solid',
     colorSolid: '#ffffff',
     colorStart: '#ffffff',
     colorEnd: '#ffffff',
-    rotX: 0,
-    rotY: 0,
-    rotZ: 0,
-    posX: 50,
-    posY: 50,
-    scale: 100,
+
+    rotX: 0, rotY: 0, rotZ: 0,
+    posX: 50, posY: 50, scale: 100,
+
     bgMode: 'solid',
     bgSolid: '#000000',
     bgStart: '#000000',
@@ -42,36 +53,39 @@ const DEFAULTS = {
 
 const state = {
     canvas: null,
-    canvasSize: 800,
+    canvasWidth: 800,
+    canvasHeight: 800,
     time: 0,
 
-    // Pattern
     pattern: 'lines',
     direction: 'vertical',
 
-    // Attributes (with rates)
     count: DEFAULTS.count,
-    countRate: DEFAULTS.countRate,
-
     weight: { ...DEFAULTS.weight },
-    weightRate: DEFAULTS.weightRate,
-
     spacing: { ...DEFAULTS.spacing },
-    spacingRate: DEFAULTS.spacingRate,
-
     length: { ...DEFAULTS.length },
-    lengthRate: DEFAULTS.lengthRate,
-
     opacity: { ...DEFAULTS.opacity },
-    opacityRate: DEFAULTS.opacityRate,
 
-    // Color
+    weightCurve: DEFAULTS.weightCurve,
+    weightPos: DEFAULTS.weightPos,
+    spacingCurve: DEFAULTS.spacingCurve,
+    spacingPos: DEFAULTS.spacingPos,
+    lengthCurve: DEFAULTS.lengthCurve,
+    lengthPos: DEFAULTS.lengthPos,
+    opacityCurve: DEFAULTS.opacityCurve,
+    opacityPos: DEFAULTS.opacityPos,
+
+    countAnim: { ...DEFAULTS.countAnim },
+    weightAnim: { ...DEFAULTS.weightAnim },
+    spacingAnim: { ...DEFAULTS.spacingAnim },
+    lengthAnim: { ...DEFAULTS.lengthAnim },
+    opacityAnim: { ...DEFAULTS.opacityAnim },
+
     colorMode: DEFAULTS.colorMode,
     colorSolid: DEFAULTS.colorSolid,
     colorStart: DEFAULTS.colorStart,
     colorEnd: DEFAULTS.colorEnd,
 
-    // Transform
     rotX: DEFAULTS.rotX,
     rotY: DEFAULTS.rotY,
     rotZ: DEFAULTS.rotZ,
@@ -79,16 +93,15 @@ const state = {
     posY: DEFAULTS.posY,
     scale: DEFAULTS.scale,
 
-    // Background
     bgMode: DEFAULTS.bgMode,
     bgSolid: DEFAULTS.bgSolid,
     bgStart: DEFAULTS.bgStart,
     bgEnd: DEFAULTS.bgEnd,
     bgGradientDir: DEFAULTS.bgGradientDir,
 
-    // Layers
     layers: [],
-    activeLayerId: null
+    activeLayerId: null,
+    draggedLayerId: null
 };
 
 // =========================================
@@ -104,13 +117,6 @@ function hexToRgb(hex) {
     } : { r: 255, g: 255, b: 255 };
 }
 
-function rgbToHex(r, g, b) {
-    return '#' + [r, g, b].map(x => {
-        const hex = Math.round(x).toString(16);
-        return hex.length === 1 ? '0' + hex : hex;
-    }).join('');
-}
-
 function lerpColor3(c1, c2, t) {
     return {
         r: Math.round(c1.r + (c2.r - c1.r) * t),
@@ -119,25 +125,72 @@ function lerpColor3(c1, c2, t) {
     };
 }
 
-function getAnimatedValue(baseValue, rate) {
-    if (rate === 0) return baseValue;
-    return baseValue + Math.sin(state.time * rate) * baseValue * 0.3;
+// Curve functions for interpolation
+function applyCurve(t, curveType, midPos = 0.5) {
+    // midPos shifts where the midpoint is (0-1)
+    const mid = midPos;
+
+    switch (curveType) {
+        case 'linear':
+            return t;
+        case 'easeIn':
+            // Quadratic ease in
+            if (t < mid) {
+                return (t / mid) * (t / mid) * 0.5;
+            }
+            return 0.5 + ((t - mid) / (1 - mid)) * 0.5;
+        case 'easeOut':
+            // Quadratic ease out
+            if (t < mid) {
+                return t / mid * 0.5;
+            }
+            const x = (t - mid) / (1 - mid);
+            return 0.5 + (1 - (1 - x) * (1 - x)) * 0.5;
+        case 'easeInOut':
+            // Smooth S-curve
+            if (t < mid) {
+                const x = t / mid;
+                return x * x * (3 - 2 * x) * 0.5;
+            }
+            const y = (t - mid) / (1 - mid);
+            return 0.5 + y * y * (3 - 2 * y) * 0.5;
+        case 'step':
+            return t < mid ? 0 : 1;
+        default:
+            return t;
+    }
 }
 
-function getAnimatedRange(range, rate) {
-    if (rate === 0) return range;
-    const offset = Math.sin(state.time * rate) * 0.3;
-    return {
-        start: range.start * (1 + offset),
-        end: range.end * (1 - offset)
-    };
+// Wave functions for animation
+function getWaveValue(waveType, phase) {
+    switch (waveType) {
+        case 'sine':
+            return Math.sin(phase * Math.PI * 2);
+        case 'triangle':
+            const t = (phase % 1);
+            return t < 0.5 ? 4 * t - 1 : 3 - 4 * t;
+        case 'square':
+            return (phase % 1) < 0.5 ? 1 : -1;
+        case 'saw':
+            return 2 * (phase % 1) - 1;
+        default:
+            return Math.sin(phase * Math.PI * 2);
+    }
 }
 
-function lerpValue(range, t) {
-    return lerp(range.start, range.end, t);
+function getAnimatedValue(baseValue, anim, time) {
+    if (anim.amp === 0) return baseValue;
+    const phase = time * anim.freq;
+    const wave = getWaveValue(anim.wave, phase);
+    return baseValue * (1 + wave * anim.amp / 100);
 }
 
-function getColor(t, layer) {
+function lerpWithCurve(range, t, curve, pos) {
+    const curvedT = applyCurve(t, curve, pos / 100);
+    return lerp(range.start, range.end, curvedT);
+}
+
+function getColor(t, layer, curve = 'linear', pos = 50) {
     let c1, c2;
 
     if (layer.colorMode === 'solid') {
@@ -148,9 +201,10 @@ function getColor(t, layer) {
         c2 = hexToRgb(layer.colorEnd);
     }
 
-    const c = lerpColor3(c1, c2, t);
-    const opacityRange = getAnimatedRange(layer.opacity, layer.opacityRate);
-    const alpha = lerpValue(opacityRange, t) / 100 * 255;
+    const curvedT = applyCurve(t, curve, pos / 100);
+    const c = lerpColor3(c1, c2, curvedT);
+    const opacityRange = layer.opacity;
+    const alpha = lerpWithCurve(opacityRange, t, layer.opacityCurve, layer.opacityPos) / 100 * 255;
 
     return color(c.r, c.g, c.b, alpha);
 }
@@ -167,15 +221,23 @@ function createLayerFromState() {
         pattern: state.pattern,
         direction: state.direction,
         count: state.count,
-        countRate: state.countRate,
         weight: { ...state.weight },
-        weightRate: state.weightRate,
         spacing: { ...state.spacing },
-        spacingRate: state.spacingRate,
         length: { ...state.length },
-        lengthRate: state.lengthRate,
         opacity: { ...state.opacity },
-        opacityRate: state.opacityRate,
+        weightCurve: state.weightCurve,
+        weightPos: state.weightPos,
+        spacingCurve: state.spacingCurve,
+        spacingPos: state.spacingPos,
+        lengthCurve: state.lengthCurve,
+        lengthPos: state.lengthPos,
+        opacityCurve: state.opacityCurve,
+        opacityPos: state.opacityPos,
+        countAnim: { ...state.countAnim },
+        weightAnim: { ...state.weightAnim },
+        spacingAnim: { ...state.spacingAnim },
+        lengthAnim: { ...state.lengthAnim },
+        opacityAnim: { ...state.opacityAnim },
         colorMode: state.colorMode,
         colorSolid: state.colorSolid,
         colorStart: state.colorStart,
@@ -226,15 +288,23 @@ function loadLayerToState(layer) {
     state.pattern = layer.pattern;
     state.direction = layer.direction;
     state.count = layer.count;
-    state.countRate = layer.countRate;
     state.weight = { ...layer.weight };
-    state.weightRate = layer.weightRate;
     state.spacing = { ...layer.spacing };
-    state.spacingRate = layer.spacingRate;
     state.length = { ...layer.length };
-    state.lengthRate = layer.lengthRate;
     state.opacity = { ...layer.opacity };
-    state.opacityRate = layer.opacityRate;
+    state.weightCurve = layer.weightCurve;
+    state.weightPos = layer.weightPos;
+    state.spacingCurve = layer.spacingCurve;
+    state.spacingPos = layer.spacingPos;
+    state.lengthCurve = layer.lengthCurve;
+    state.lengthPos = layer.lengthPos;
+    state.opacityCurve = layer.opacityCurve;
+    state.opacityPos = layer.opacityPos;
+    state.countAnim = { ...layer.countAnim };
+    state.weightAnim = { ...layer.weightAnim };
+    state.spacingAnim = { ...layer.spacingAnim };
+    state.lengthAnim = { ...layer.lengthAnim };
+    state.opacityAnim = { ...layer.opacityAnim };
     state.colorMode = layer.colorMode;
     state.colorSolid = layer.colorSolid;
     state.colorStart = layer.colorStart;
@@ -256,15 +326,23 @@ function saveStateToActiveLayer() {
     layer.pattern = state.pattern;
     layer.direction = state.direction;
     layer.count = state.count;
-    layer.countRate = state.countRate;
     layer.weight = { ...state.weight };
-    layer.weightRate = state.weightRate;
     layer.spacing = { ...state.spacing };
-    layer.spacingRate = state.spacingRate;
     layer.length = { ...state.length };
-    layer.lengthRate = state.lengthRate;
     layer.opacity = { ...state.opacity };
-    layer.opacityRate = state.opacityRate;
+    layer.weightCurve = state.weightCurve;
+    layer.weightPos = state.weightPos;
+    layer.spacingCurve = state.spacingCurve;
+    layer.spacingPos = state.spacingPos;
+    layer.lengthCurve = state.lengthCurve;
+    layer.lengthPos = state.lengthPos;
+    layer.opacityCurve = state.opacityCurve;
+    layer.opacityPos = state.opacityPos;
+    layer.countAnim = { ...state.countAnim };
+    layer.weightAnim = { ...state.weightAnim };
+    layer.spacingAnim = { ...state.spacingAnim };
+    layer.lengthAnim = { ...state.lengthAnim };
+    layer.opacityAnim = { ...state.opacityAnim };
     layer.colorMode = state.colorMode;
     layer.colorSolid = state.colorSolid;
     layer.colorStart = state.colorStart;
@@ -279,15 +357,26 @@ function saveStateToActiveLayer() {
     updateLayersUI();
 }
 
+function moveLayer(fromIndex, toIndex) {
+    const layer = state.layers.splice(fromIndex, 1)[0];
+    state.layers.splice(toIndex, 0, layer);
+    updateLayersUI();
+}
+
 function updateLayersUI() {
     const list = document.getElementById('layersList');
     if (!list) return;
 
     list.innerHTML = '';
 
-    [...state.layers].reverse().forEach(layer => {
+    [...state.layers].reverse().forEach((layer, displayIndex) => {
+        const realIndex = state.layers.length - 1 - displayIndex;
         const item = document.createElement('div');
         item.className = `layer-item${layer.id === state.activeLayerId ? ' active' : ''}`;
+        item.draggable = true;
+        item.dataset.id = layer.id;
+        item.dataset.index = realIndex;
+
         item.innerHTML = `
             <div class="layer-visibility ${layer.visible ? 'visible' : ''}" data-id="${layer.id}">
                 ${layer.visible ? '◉' : '○'}
@@ -299,21 +388,62 @@ function updateLayersUI() {
             <button class="layer-delete" data-id="${layer.id}">×</button>
         `;
 
+        // Click to select
         item.addEventListener('click', (e) => {
             if (!e.target.closest('.layer-visibility') && !e.target.closest('.layer-delete')) {
                 selectLayer(layer.id);
             }
         });
 
+        // Toggle visibility
         item.querySelector('.layer-visibility').addEventListener('click', (e) => {
             e.stopPropagation();
             layer.visible = !layer.visible;
             updateLayersUI();
         });
 
+        // Delete
         item.querySelector('.layer-delete').addEventListener('click', (e) => {
             e.stopPropagation();
             deleteLayer(layer.id);
+        });
+
+        // Drag and drop
+        item.addEventListener('dragstart', (e) => {
+            state.draggedLayerId = layer.id;
+            item.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+            state.draggedLayerId = null;
+            document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('drag-over'));
+        });
+
+        item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            if (layer.id !== state.draggedLayerId) {
+                item.classList.add('drag-over');
+            }
+        });
+
+        item.addEventListener('dragleave', () => {
+            item.classList.remove('drag-over');
+        });
+
+        item.addEventListener('drop', (e) => {
+            e.preventDefault();
+            item.classList.remove('drag-over');
+
+            if (state.draggedLayerId && layer.id !== state.draggedLayerId) {
+                const fromIndex = state.layers.findIndex(l => l.id === state.draggedLayerId);
+                const toIndex = state.layers.findIndex(l => l.id === layer.id);
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    moveLayer(fromIndex, toIndex);
+                }
+            }
         });
 
         list.appendChild(item);
@@ -324,69 +454,84 @@ function updateLayersUI() {
 // Pattern Renderers
 // =========================================
 
-function drawLines(layer) {
-    const size = state.canvasSize;
-    const count = Math.round(getAnimatedValue(layer.count, layer.countRate));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
-    const spacingRange = getAnimatedRange(layer.spacing, layer.spacingRate);
-    const lengthRange = getAnimatedRange(layer.length, layer.lengthRate);
+function drawLines(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const count = Math.round(getAnimatedValue(layer.count, layer.countAnim, time));
 
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
 
-        // Position with spacing
+        // Calculate position with spacing curve
         let pos;
-        if (spacingRange.start === spacingRange.end) {
-            pos = (i + 0.5) / count * size;
+        if (layer.spacing.start === layer.spacing.end) {
+            pos = (i + 0.5) / count;
         } else {
             let accumulated = 0;
             for (let j = 0; j <= i; j++) {
                 const jt = count > 1 ? j / (count - 1) : 0.5;
-                accumulated += lerpValue(spacingRange, jt);
+                accumulated += lerpWithCurve(layer.spacing, jt, layer.spacingCurve, layer.spacingPos);
             }
             let total = 0;
             for (let j = 0; j < count; j++) {
                 const jt = count > 1 ? j / (count - 1) : 0.5;
-                total += lerpValue(spacingRange, jt);
+                total += lerpWithCurve(layer.spacing, jt, layer.spacingCurve, layer.spacingPos);
             }
-            pos = (accumulated / total) * size;
+            pos = accumulated / total;
         }
 
-        const weight = lerpValue(weightRange, t);
-        const lengthPct = lerpValue(lengthRange, t) / 100;
-        const halfGap = (1 - lengthPct) / 2 * size;
-        const col = getColor(t, layer);
+        const weight = getAnimatedValue(
+            lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+            layer.weightAnim, time
+        );
+
+        const lengthPct = getAnimatedValue(
+            lerpWithCurve(layer.length, t, layer.lengthCurve, layer.lengthPos),
+            layer.lengthAnim, time
+        ) / 100;
+
+        const col = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
         strokeWeight(max(0.5, weight));
         stroke(col);
 
         if (layer.direction === 'vertical') {
-            line(pos, halfGap, pos, size - halfGap);
+            const x = pos * w;
+            const halfGap = (1 - lengthPct) / 2 * h;
+            line(x, halfGap, x, h - halfGap);
         } else if (layer.direction === 'horizontal') {
-            line(halfGap, pos, size - halfGap, pos);
+            const y = pos * h;
+            const halfGap = (1 - lengthPct) / 2 * w;
+            line(halfGap, y, w - halfGap, y);
         } else {
-            const offset = (i - count / 2) * (size / count) * 1.5;
-            line(offset, 0, offset + size, size);
+            const offset = (i - count / 2) * (w / count) * 1.5;
+            line(offset, 0, offset + w, h);
         }
     }
 }
 
-function drawRadial(layer) {
-    const size = state.canvasSize;
-    const cx = size / 2;
-    const cy = size / 2;
-    const count = Math.round(getAnimatedValue(layer.count, layer.countRate));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
-    const lengthRange = getAnimatedRange(layer.length, layer.lengthRate);
-    const radius = size * 0.7;
+function drawRadial(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const cx = w / 2;
+    const cy = h / 2;
+    const count = Math.round(getAnimatedValue(layer.count, layer.countAnim, time));
+    const radius = Math.min(w, h) * 0.7;
 
     for (let i = 0; i < count; i++) {
         const t = i / count;
         const angle = t * TWO_PI;
 
-        const weight = lerpValue(weightRange, t);
-        const lengthPct = lerpValue(lengthRange, t) / 100;
-        const col = getColor(t, layer);
+        const weight = getAnimatedValue(
+            lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+            layer.weightAnim, time
+        );
+        const lengthPct = getAnimatedValue(
+            lerpWithCurve(layer.length, t, layer.lengthCurve, layer.lengthPos),
+            layer.lengthAnim, time
+        ) / 100;
+
+        const col = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
         strokeWeight(max(0.5, weight));
         stroke(col);
@@ -401,14 +546,13 @@ function drawRadial(layer) {
     }
 }
 
-function drawCircles(layer) {
-    const size = state.canvasSize;
-    const cx = size / 2;
-    const cy = size / 2;
-    const count = Math.round(getAnimatedValue(layer.count, layer.countRate));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
-    const spacingRange = getAnimatedRange(layer.spacing, layer.spacingRate);
-    const maxRadius = size * 0.45;
+function drawCircles(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const cx = w / 2;
+    const cy = h / 2;
+    const count = Math.round(getAnimatedValue(layer.count, layer.countAnim, time));
+    const maxRadius = Math.min(w, h) * 0.45;
 
     noFill();
 
@@ -416,24 +560,27 @@ function drawCircles(layer) {
         const t = count > 1 ? i / (count - 1) : 0.5;
 
         let r;
-        if (spacingRange.start === spacingRange.end) {
+        if (layer.spacing.start === layer.spacing.end) {
             r = (t * 0.9 + 0.1) * maxRadius;
         } else {
             let accumulated = 0;
             for (let j = 0; j <= i; j++) {
                 const jt = count > 1 ? j / (count - 1) : 0.5;
-                accumulated += lerpValue(spacingRange, jt);
+                accumulated += lerpWithCurve(layer.spacing, jt, layer.spacingCurve, layer.spacingPos);
             }
             let total = 0;
             for (let j = 0; j < count; j++) {
                 const jt = count > 1 ? j / (count - 1) : 0.5;
-                total += lerpValue(spacingRange, jt);
+                total += lerpWithCurve(layer.spacing, jt, layer.spacingCurve, layer.spacingPos);
             }
             r = (accumulated / total) * maxRadius;
         }
 
-        const weight = lerpValue(weightRange, t);
-        const col = getColor(t, layer);
+        const weight = getAnimatedValue(
+            lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+            layer.weightAnim, time
+        );
+        const col = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
         strokeWeight(max(0.5, weight));
         stroke(col);
@@ -441,63 +588,77 @@ function drawCircles(layer) {
     }
 }
 
-function drawGrid(layer) {
-    const size = state.canvasSize;
-    const gridSize = Math.round(sqrt(getAnimatedValue(layer.count, layer.countRate)));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
-    const lengthRange = getAnimatedRange(layer.length, layer.lengthRate);
-    const cellW = size / gridSize;
+function drawGrid(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const gridSize = Math.round(sqrt(getAnimatedValue(layer.count, layer.countAnim, time)));
+    const cellW = w / gridSize;
+    const cellH = h / gridSize;
 
     noFill();
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const t = (row * gridSize + col) / (gridSize * gridSize - 1);
-            const weight = lerpValue(weightRange, t);
-            const sizeMult = lerpValue(lengthRange, t) / 100;
-            const col_ = getColor(t, layer);
+
+            const weight = getAnimatedValue(
+                lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+                layer.weightAnim, time
+            );
+            const sizeMult = getAnimatedValue(
+                lerpWithCurve(layer.length, t, layer.lengthCurve, layer.lengthPos),
+                layer.lengthAnim, time
+            ) / 100;
+
+            const col_ = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
             strokeWeight(max(0.5, weight));
             stroke(col_);
 
             const x = col * cellW;
-            const y = row * cellW;
-            const w = cellW * sizeMult;
-            const offset = (cellW - w) / 2;
+            const y = row * cellH;
+            const rw = cellW * sizeMult;
+            const rh = cellH * sizeMult;
+            const offsetX = (cellW - rw) / 2;
+            const offsetY = (cellH - rh) / 2;
 
-            rect(x + offset, y + offset, w, w);
+            rect(x + offsetX, y + offsetY, rw, rh);
         }
     }
 }
 
-function drawDots(layer) {
-    const size = state.canvasSize;
-    const gridSize = Math.round(sqrt(getAnimatedValue(layer.count, layer.countRate)));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
-    const cellW = size / gridSize;
+function drawDots(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const gridSize = Math.round(sqrt(getAnimatedValue(layer.count, layer.countAnim, time)));
+    const cellW = w / gridSize;
+    const cellH = h / gridSize;
 
     noStroke();
 
     for (let row = 0; row < gridSize; row++) {
         for (let col = 0; col < gridSize; col++) {
             const t = (row * gridSize + col) / (gridSize * gridSize - 1);
-            const dotSize = lerpValue(weightRange, t) * 2;
-            const col_ = getColor(t, layer);
+            const dotSize = getAnimatedValue(
+                lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+                layer.weightAnim, time
+            ) * 2;
+            const col_ = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
             fill(col_);
-            circle(col * cellW + cellW / 2, row * cellW + cellW / 2, dotSize);
+            circle(col * cellW + cellW / 2, row * cellH + cellH / 2, dotSize);
         }
     }
 }
 
-function drawTriangle(layer) {
-    const size = state.canvasSize;
-    const count = Math.round(getAnimatedValue(layer.count, layer.countRate));
-    const weightRange = getAnimatedRange(layer.weight, layer.weightRate);
+function drawTriangle(layer, time) {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const count = Math.round(getAnimatedValue(layer.count, layer.countAnim, time));
 
-    const topX = size / 2, topY = size * 0.1;
-    const leftX = size * 0.1, leftY = size * 0.9;
-    const rightX = size * 0.9, rightY = size * 0.9;
+    const topX = w / 2, topY = h * 0.1;
+    const leftX = w * 0.1, leftY = h * 0.9;
+    const rightX = w * 0.9, rightY = h * 0.9;
 
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
@@ -506,8 +667,11 @@ function drawTriangle(layer) {
         const xLeft = lerp(topX, leftX, progress);
         const xRight = lerp(topX, rightX, progress);
 
-        const weight = lerpValue(weightRange, t);
-        const col = getColor(t, layer);
+        const weight = getAnimatedValue(
+            lerpWithCurve(layer.weight, t, layer.weightCurve, layer.weightPos),
+            layer.weightAnim, time
+        );
+        const col = getColor(t, layer, layer.opacityCurve, layer.opacityPos);
 
         strokeWeight(max(0.5, weight));
         stroke(col);
@@ -515,38 +679,42 @@ function drawTriangle(layer) {
     }
 }
 
-function renderLayer(layer) {
+function renderLayer(layer, time) {
     push();
 
-    const size = state.canvasSize;
-    const cx = size / 2;
-    const cy = size / 2;
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+    const cx = w / 2;
+    const cy = h / 2;
 
     translate(cx, cy);
     rotate(radians(layer.rotZ));
     scale(1, cos(radians(layer.rotX)));
     applyMatrix(1, 0, tan(radians(layer.rotY * 0.5)), 1, 0, 0);
-    translate((layer.posX - 50) * size / 100, (layer.posY - 50) * size / 100);
+    translate((layer.posX - 50) * w / 100, (layer.posY - 50) * h / 100);
     scale(layer.scale / 100);
     translate(-cx, -cy);
 
     switch (layer.pattern) {
-        case 'lines': drawLines(layer); break;
-        case 'radial': drawRadial(layer); break;
-        case 'circles': drawCircles(layer); break;
-        case 'grid': drawGrid(layer); break;
-        case 'dots': drawDots(layer); break;
-        case 'triangle': drawTriangle(layer); break;
+        case 'lines': drawLines(layer, time); break;
+        case 'radial': drawRadial(layer, time); break;
+        case 'circles': drawCircles(layer, time); break;
+        case 'grid': drawGrid(layer, time); break;
+        case 'dots': drawDots(layer, time); break;
+        case 'triangle': drawTriangle(layer, time); break;
     }
 
     pop();
 }
 
 // =========================================
-// Background Rendering
+// Background
 // =========================================
 
 function drawBackground() {
+    const w = state.canvasWidth;
+    const h = state.canvasHeight;
+
     if (state.bgMode === 'solid') {
         const c = hexToRgb(state.bgSolid);
         background(c.r, c.g, c.b);
@@ -554,31 +722,29 @@ function drawBackground() {
         const c1 = hexToRgb(state.bgStart);
         const c2 = hexToRgb(state.bgEnd);
 
-        noStroke();
         if (state.bgGradientDir === 'vertical') {
-            for (let y = 0; y < state.canvasSize; y++) {
-                const t = y / state.canvasSize;
+            for (let y = 0; y < h; y++) {
+                const t = y / h;
                 const c = lerpColor3(c1, c2, t);
                 stroke(c.r, c.g, c.b);
-                line(0, y, state.canvasSize, y);
+                line(0, y, w, y);
             }
         } else if (state.bgGradientDir === 'horizontal') {
-            for (let x = 0; x < state.canvasSize; x++) {
-                const t = x / state.canvasSize;
+            for (let x = 0; x < w; x++) {
+                const t = x / w;
                 const c = lerpColor3(c1, c2, t);
                 stroke(c.r, c.g, c.b);
-                line(x, 0, x, state.canvasSize);
+                line(x, 0, x, h);
             }
         } else {
-            // Radial
-            const cx = state.canvasSize / 2;
-            const cy = state.canvasSize / 2;
-            const maxR = state.canvasSize * 0.7;
+            const maxR = Math.max(w, h) * 0.7;
+            const cx = w / 2;
+            const cy = h / 2;
+            noStroke();
             for (let r = maxR; r > 0; r -= 2) {
                 const t = 1 - r / maxR;
                 const c = lerpColor3(c1, c2, t);
                 fill(c.r, c.g, c.b);
-                noStroke();
                 circle(cx, cy, r * 2);
             }
         }
@@ -591,16 +757,15 @@ function drawBackground() {
 
 function setup() {
     const wrapper = document.getElementById('canvasWrapper');
-    const maxSize = min(wrapper.clientWidth - 48, wrapper.clientHeight - 48);
-    state.canvasSize = min(800, max(400, floor(maxSize / 50) * 50));
 
-    state.canvas = createCanvas(state.canvasSize, state.canvasSize);
+    state.canvas = createCanvas(state.canvasWidth, state.canvasHeight);
     state.canvas.parent('canvas');
 
     pixelDensity(2);
     frameRate(60);
 
-    document.getElementById('coords').textContent = `${state.canvasSize} × ${state.canvasSize}`;
+    document.getElementById('resWidth').value = state.canvasWidth;
+    document.getElementById('resHeight').value = state.canvasHeight;
 
     createLayer();
     initUI();
@@ -614,16 +779,8 @@ function draw() {
     drawBackground();
 
     state.layers.forEach(layer => {
-        if (layer.visible) renderLayer(layer);
+        if (layer.visible) renderLayer(layer, state.time);
     });
-}
-
-function windowResized() {
-    const wrapper = document.getElementById('canvasWrapper');
-    const maxSize = min(wrapper.clientWidth - 48, wrapper.clientHeight - 48);
-    state.canvasSize = min(800, max(400, floor(maxSize / 50) * 50));
-    resizeCanvas(state.canvasSize, state.canvasSize);
-    document.getElementById('coords').textContent = `${state.canvasSize} × ${state.canvasSize}`;
 }
 
 // =========================================
@@ -637,10 +794,8 @@ function initUI() {
             document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             state.pattern = btn.dataset.pattern;
-
-            const dirSelector = document.getElementById('directionSelector');
-            dirSelector.style.display = state.pattern === 'lines' ? 'flex' : 'none';
-
+            document.getElementById('directionSelector').style.display =
+                state.pattern === 'lines' ? 'flex' : 'none';
             saveStateToActiveLayer();
         });
     });
@@ -656,26 +811,27 @@ function initUI() {
     });
 
     // Count (single value)
-    setupSingleControl('count', 'countValue', 'countSlider', val => {
-        state.count = parseInt(val);
-        saveStateToActiveLayer();
+    setupSingleControl('count', 'countValue', 'countSlider');
+
+    // Range controls with curves
+    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
+        setupRangeControl(param);
+        setupCurveControl(param);
     });
 
-    // Range controls
-    setupRangeControl('weight', 'weightStart', 'weightEnd', 'weightSliderStart', 'weightSliderEnd', 'weightRange');
-    setupRangeControl('spacing', 'spacingStart', 'spacingEnd', 'spacingSliderStart', 'spacingSliderEnd', 'spacingRange');
-    setupRangeControl('length', 'lengthStart', 'lengthEnd', 'lengthSliderStart', 'lengthSliderEnd', 'lengthRange');
-    setupRangeControl('opacity', 'opacityStart', 'opacityEnd', 'opacitySliderStart', 'opacitySliderEnd', 'opacityRange');
-
-    // Rate inputs
+    // Animation toggles and panels
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(param => {
-        const input = document.getElementById(`${param}Rate`);
-        if (input) {
-            input.addEventListener('input', () => {
-                state[`${param}Rate`] = parseFloat(input.value) || 0;
-                saveStateToActiveLayer();
+        const toggle = document.querySelector(`.anim-toggle[data-param="${param}"] .anim-btn`);
+        const panel = document.getElementById(`${param}AnimPanel`);
+
+        if (toggle && panel) {
+            toggle.addEventListener('click', () => {
+                toggle.classList.toggle('active');
+                panel.classList.toggle('hidden');
             });
         }
+
+        setupAnimControl(param);
     });
 
     // Color mode toggle
@@ -750,7 +906,7 @@ function initUI() {
         }
     });
 
-    // Background mode toggle
+    // Background
     document.getElementById('bgModeSolid').addEventListener('click', () => {
         state.bgMode = 'solid';
         document.getElementById('bgModeSolid').classList.add('active');
@@ -768,7 +924,6 @@ function initUI() {
         updateBgGradientPreview();
     });
 
-    // Background solid buttons
     document.querySelectorAll('.bg-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
@@ -782,7 +937,6 @@ function initUI() {
         document.querySelectorAll('.bg-btn').forEach(b => b.classList.remove('active'));
     });
 
-    // Background gradient
     document.getElementById('bgStart').addEventListener('input', e => {
         state.bgStart = e.target.value;
         updateBgGradientPreview();
@@ -793,7 +947,6 @@ function initUI() {
         updateBgGradientPreview();
     });
 
-    // Background gradient direction
     document.querySelectorAll('.bg-gradient-dir .dir-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.bg-gradient-dir .dir-btn').forEach(b => b.classList.remove('active'));
@@ -802,68 +955,72 @@ function initUI() {
         });
     });
 
+    // Resolution
+    document.getElementById('resApply').addEventListener('click', applyResolution);
+    document.getElementById('resWidth').addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyResolution();
+    });
+    document.getElementById('resHeight').addEventListener('keydown', e => {
+        if (e.key === 'Enter') applyResolution();
+    });
+
     // Double-click reset
     document.querySelectorAll('.resetable').forEach(el => {
         el.addEventListener('dblclick', () => {
-            const param = el.dataset.reset;
-            resetAttribute(param);
+            resetAttribute(el.dataset.reset);
         });
     });
 
     // Add layer
     document.getElementById('addLayerBtn').addEventListener('click', createLayer);
 
-    // Reset all
+    // Reset / Random
     document.getElementById('resetBtn').addEventListener('click', resetAll);
-
-    // Random
     document.getElementById('randomBtn').addEventListener('click', randomize);
 
-    // Export PNG
+    // Export
     document.getElementById('exportPng').addEventListener('click', () => {
         saveCanvas('vector-lab-' + Date.now(), 'png');
     });
 
-    // Export SVG (placeholder - would need svg library)
     document.getElementById('exportSvg').addEventListener('click', () => {
-        alert('SVG export coming soon! Use PNG for now.');
+        alert('SVG export coming soon!');
     });
 
-    // Save JSON
     document.getElementById('saveJson').addEventListener('click', saveProject);
-
-    // Load JSON
     document.getElementById('loadJson').addEventListener('change', loadProject);
 
     // Keyboard shortcuts
     document.addEventListener('keydown', e => {
-        if (e.target.matches('input')) return;
+        if (e.target.matches('input, select')) return;
         if (e.code === 'Space') { e.preventDefault(); randomize(); }
         if (e.code === 'KeyR') resetAll();
     });
 }
 
-function setupSingleControl(param, inputId, sliderId, onChange) {
+function setupSingleControl(param, inputId, sliderId) {
     const input = document.getElementById(inputId);
     const slider = document.getElementById(sliderId);
 
     input.addEventListener('input', () => {
         slider.value = input.value;
-        onChange(input.value);
+        state[param] = parseFloat(input.value);
+        saveStateToActiveLayer();
     });
 
     slider.addEventListener('input', () => {
         input.value = slider.value;
-        onChange(slider.value);
+        state[param] = parseFloat(slider.value);
+        saveStateToActiveLayer();
     });
 }
 
-function setupRangeControl(param, startInputId, endInputId, startSliderId, endSliderId, rangeId) {
-    const startInput = document.getElementById(startInputId);
-    const endInput = document.getElementById(endInputId);
-    const startSlider = document.getElementById(startSliderId);
-    const endSlider = document.getElementById(endSliderId);
-    const rangeEl = document.getElementById(rangeId);
+function setupRangeControl(param) {
+    const startInput = document.getElementById(`${param}Start`);
+    const endInput = document.getElementById(`${param}End`);
+    const startSlider = document.getElementById(`${param}SliderStart`);
+    const endSlider = document.getElementById(`${param}SliderEnd`);
+    const rangeEl = document.getElementById(`${param}Range`);
 
     function update() {
         const min = parseFloat(startSlider.min);
@@ -889,14 +1046,70 @@ function setupRangeControl(param, startInputId, endInputId, startSliderId, endSl
     update();
 }
 
+function setupCurveControl(param) {
+    const curveSelect = document.getElementById(`${param}Curve`);
+    const posSlider = document.getElementById(`${param}Pos`);
+
+    if (curveSelect) {
+        curveSelect.addEventListener('change', () => {
+            state[`${param}Curve`] = curveSelect.value;
+            saveStateToActiveLayer();
+        });
+    }
+
+    if (posSlider) {
+        posSlider.addEventListener('input', () => {
+            state[`${param}Pos`] = parseFloat(posSlider.value);
+            saveStateToActiveLayer();
+        });
+    }
+}
+
+function setupAnimControl(param) {
+    const wave = document.getElementById(`${param}Wave`);
+    const amp = document.getElementById(`${param}Amp`);
+    const freq = document.getElementById(`${param}Freq`);
+
+    if (wave) {
+        wave.addEventListener('change', () => {
+            state[`${param}Anim`].wave = wave.value;
+            saveStateToActiveLayer();
+        });
+    }
+
+    if (amp) {
+        amp.addEventListener('input', () => {
+            state[`${param}Anim`].amp = parseFloat(amp.value) || 0;
+            saveStateToActiveLayer();
+        });
+    }
+
+    if (freq) {
+        freq.addEventListener('input', () => {
+            state[`${param}Anim`].freq = parseFloat(freq.value) || 1;
+            saveStateToActiveLayer();
+        });
+    }
+}
+
+function applyResolution() {
+    const w = parseInt(document.getElementById('resWidth').value) || 800;
+    const h = parseInt(document.getElementById('resHeight').value) || 800;
+    state.canvasWidth = constrain(w, 100, 4000);
+    state.canvasHeight = constrain(h, 100, 4000);
+    resizeCanvas(state.canvasWidth, state.canvasHeight);
+    document.getElementById('resWidth').value = state.canvasWidth;
+    document.getElementById('resHeight').value = state.canvasHeight;
+}
+
 function updateColorGradientPreview() {
     const preview = document.getElementById('colorGradientPreview');
-    preview.style.background = `linear-gradient(90deg, ${state.colorStart}, ${state.colorEnd})`;
+    if (preview) preview.style.background = `linear-gradient(90deg, ${state.colorStart}, ${state.colorEnd})`;
 }
 
 function updateBgGradientPreview() {
     const preview = document.getElementById('bgGradientPreview');
-    preview.style.background = `linear-gradient(90deg, ${state.bgStart}, ${state.bgEnd})`;
+    if (preview) preview.style.background = `linear-gradient(90deg, ${state.bgStart}, ${state.bgEnd})`;
 }
 
 function syncUIWithState() {
@@ -914,13 +1127,11 @@ function syncUIWithState() {
     // Count
     document.getElementById('countValue').value = state.count;
     document.getElementById('countSlider').value = state.count;
-    document.getElementById('countRate').value = state.countRate;
 
-    // Ranges
-    syncRange('weight');
-    syncRange('spacing');
-    syncRange('length');
-    syncRange('opacity');
+    // Ranges with curves
+    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
+        syncRange(param);
+    });
 
     // Colors
     document.getElementById('colorSolid').value = state.colorSolid;
@@ -955,65 +1166,54 @@ function syncRange(param) {
     const startSlider = document.getElementById(`${param}SliderStart`);
     const endSlider = document.getElementById(`${param}SliderEnd`);
     const rangeEl = document.getElementById(`${param}Range`);
-    const rateInput = document.getElementById(`${param}Rate`);
+    const curveSelect = document.getElementById(`${param}Curve`);
+    const posSlider = document.getElementById(`${param}Pos`);
 
-    startInput.value = state[param].start;
-    endInput.value = state[param].end;
-    startSlider.value = state[param].start;
-    endSlider.value = state[param].end;
-    if (rateInput) rateInput.value = state[`${param}Rate`];
+    if (startInput) startInput.value = state[param].start;
+    if (endInput) endInput.value = state[param].end;
+    if (startSlider) startSlider.value = state[param].start;
+    if (endSlider) endSlider.value = state[param].end;
+    if (curveSelect) curveSelect.value = state[`${param}Curve`];
+    if (posSlider) posSlider.value = state[`${param}Pos`];
 
-    const min = parseFloat(startSlider.min);
-    const max = parseFloat(startSlider.max);
-    const startPct = ((state[param].start - min) / (max - min)) * 100;
-    const endPct = ((state[param].end - min) / (max - min)) * 100;
-    rangeEl.style.left = `${Math.min(startPct, endPct)}%`;
-    rangeEl.style.right = `${100 - Math.max(startPct, endPct)}%`;
+    if (rangeEl && startSlider) {
+        const min = parseFloat(startSlider.min);
+        const max = parseFloat(startSlider.max);
+        const startPct = ((state[param].start - min) / (max - min)) * 100;
+        const endPct = ((state[param].end - min) / (max - min)) * 100;
+        rangeEl.style.left = `${Math.min(startPct, endPct)}%`;
+        rangeEl.style.right = `${100 - Math.max(startPct, endPct)}%`;
+    }
 }
 
 function resetAttribute(param) {
-    if (param === 'count') {
-        state.count = DEFAULTS.count;
-        document.getElementById('countValue').value = state.count;
-        document.getElementById('countSlider').value = state.count;
-    } else if (param === 'countRate') {
-        state.countRate = DEFAULTS.countRate;
-        document.getElementById('countRate').value = state.countRate;
-    } else if (param === 'color') {
+    if (param === 'count') state.count = DEFAULTS.count;
+    else if (['weight', 'spacing', 'length', 'opacity'].includes(param)) {
+        state[param] = { ...DEFAULTS[param] };
+        state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
+        state[`${param}Pos`] = DEFAULTS[`${param}Pos`];
+    }
+    else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) {
+        state[param] = DEFAULTS[param];
+    }
+    else if (param === 'color') {
         state.colorSolid = DEFAULTS.colorSolid;
         state.colorStart = DEFAULTS.colorStart;
         state.colorEnd = DEFAULTS.colorEnd;
-        document.getElementById('colorSolid').value = state.colorSolid;
-        document.getElementById('colorStart').value = state.colorStart;
-        document.getElementById('colorEnd').value = state.colorEnd;
-        updateColorGradientPreview();
-    } else if (param === 'bg') {
+    }
+    else if (param === 'bg') {
         state.bgSolid = DEFAULTS.bgSolid;
         state.bgStart = DEFAULTS.bgStart;
         state.bgEnd = DEFAULTS.bgEnd;
-        document.getElementById('bgSolidColor').value = state.bgSolid;
-        document.getElementById('bgStart').value = state.bgStart;
-        document.getElementById('bgEnd').value = state.bgEnd;
-        updateBgGradientPreview();
-    } else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) {
-        state[param] = DEFAULTS[param];
-        document.getElementById(param).value = state[param];
-        document.getElementById(`${param}Value`).value = state[param];
-    } else if (['weight', 'spacing', 'length', 'opacity'].includes(param)) {
-        state[param] = { ...DEFAULTS[param] };
-        syncRange(param);
-    } else if (param.endsWith('Rate')) {
-        const base = param.replace('Rate', '');
-        state[param] = DEFAULTS[param];
-        document.getElementById(param).value = state[param];
     }
 
+    syncUIWithState();
     saveStateToActiveLayer();
 }
 
 function resetAll() {
     Object.keys(DEFAULTS).forEach(key => {
-        if (typeof DEFAULTS[key] === 'object') {
+        if (typeof DEFAULTS[key] === 'object' && !Array.isArray(DEFAULTS[key])) {
             state[key] = { ...DEFAULTS[key] };
         } else {
             state[key] = DEFAULTS[key];
@@ -1033,6 +1233,12 @@ function randomize() {
     state.spacing = { start: random(0.3, 2), end: random(0.3, 2) };
     state.length = { start: random(50, 100), end: random(50, 100) };
     state.opacity = { start: random(60, 100), end: random(60, 100) };
+
+    const curves = ['linear', 'easeIn', 'easeOut', 'easeInOut'];
+    state.weightCurve = curves[floor(random(curves.length))];
+    state.spacingCurve = curves[floor(random(curves.length))];
+    state.lengthCurve = curves[floor(random(curves.length))];
+    state.opacityCurve = curves[floor(random(curves.length))];
 
     const palettes = [
         ['#ffffff', '#ffffff'],
@@ -1061,13 +1267,14 @@ function randomize() {
 }
 
 // =========================================
-// Save/Load Project
+// Save/Load
 // =========================================
 
 function saveProject() {
     const project = {
-        version: '1.0',
+        version: '2.0',
         timestamp: Date.now(),
+        resolution: { width: state.canvasWidth, height: state.canvasHeight },
         global: {
             bgMode: state.bgMode,
             bgSolid: state.bgSolid,
@@ -1086,7 +1293,6 @@ function saveProject() {
     a.href = url;
     a.download = `vector-lab-${Date.now()}.json`;
     a.click();
-
     URL.revokeObjectURL(url);
 }
 
@@ -1098,6 +1304,14 @@ function loadProject(e) {
     reader.onload = (event) => {
         try {
             const project = JSON.parse(event.target.result);
+
+            if (project.resolution) {
+                state.canvasWidth = project.resolution.width || 800;
+                state.canvasHeight = project.resolution.height || 800;
+                resizeCanvas(state.canvasWidth, state.canvasHeight);
+                document.getElementById('resWidth').value = state.canvasWidth;
+                document.getElementById('resHeight').value = state.canvasHeight;
+            }
 
             if (project.global) {
                 state.bgMode = project.global.bgMode || 'solid';
@@ -1114,12 +1328,11 @@ function loadProject(e) {
                 updateLayersUI();
             }
 
-            console.log('Project loaded successfully');
+            console.log('Project loaded');
         } catch (err) {
-            alert('Error loading project: ' + err.message);
+            alert('Error: ' + err.message);
         }
     };
     reader.readAsText(file);
-
     e.target.value = '';
 }
