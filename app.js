@@ -1,63 +1,76 @@
 /**
  * VECTOR.LAB — 80s Pattern Generator
+ * Refactored for Grid System (Cols x Rows) & Split X/Y Control
  */
 
+// --- UTILS (Vanilla to avoid p5 scope issues) ---
+function mapV(n, start1, stop1, start2, stop2) {
+    return ((n - start1) / (stop1 - start1)) * (stop2 - start2) + start2;
+}
+function lerpV(start, stop, amt) {
+    return start + (stop - start) * amt;
+}
+
 const DEFAULTS = {
-    count: 20,
-    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear', weightMult: 1, weightSteps: 100,
-    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingMult: 1, spacingSteps: 100, spacingFit: true,
-    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear', lengthMult: 1, lengthSteps: 100,
-    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear', opacityMult: 1, opacitySteps: 100,
+    shape: 'lines', // 'lines' or 'circles'
+    cols: 10, rows: 10,
+
+    // Rotation (Split X/Y)
+    rotationX: { start: 0, end: 0 }, rotationXFadeStart: 0, rotationXFadeEnd: 100, rotationXCurve: 'linear', rotationXMult: 1, rotationXSteps: 100,
+    rotationY: { start: 0, end: 0 }, rotationYFadeStart: 0, rotationYFadeEnd: 100, rotationYCurve: 'linear', rotationYMult: 1, rotationYSteps: 100,
+
+    // Weight/Thickness (Split X/Y)
+    weightX: { start: 2, end: 2 }, weightXFadeStart: 0, weightXFadeEnd: 100, weightXCurve: 'linear', weightXMult: 1, weightXSteps: 100,
+    weightY: { start: 2, end: 2 }, weightYFadeStart: 0, weightYFadeEnd: 100, weightYCurve: 'linear', weightYMult: 1, weightYSteps: 100,
+
+    // Length (Split X/Y) - Logic: % of cell size
+    lengthX: { start: 100, end: 100 }, lengthXFadeStart: 0, lengthXFadeEnd: 100, lengthXCurve: 'linear', lengthXMult: 1, lengthXSteps: 100,
+    lengthY: { start: 100, end: 100 }, lengthYFadeStart: 0, lengthYFadeEnd: 100, lengthYCurve: 'linear', lengthYMult: 1, lengthYSteps: 100,
+
+    // Opacity (Split X/Y)
+    opacityX: { start: 100, end: 100 }, opacityXFadeStart: 0, opacityXFadeEnd: 100, opacityXCurve: 'linear', opacityXMult: 1, opacityXSteps: 100,
+    opacityY: { start: 100, end: 100 }, opacityYFadeStart: 0, opacityYFadeEnd: 100, opacityYCurve: 'linear', opacityYMult: 1, opacityYSteps: 100,
+
+    // Color
     colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x', colorFadeStart: 0, colorFadeEnd: 100, colorSteps: 100,
+
+    // Global
     rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
     bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
 };
 
-// Logarithmic Steps Helpers
-function toLogSteps(sliderVal, maxSteps = 100) {
-    if (maxSteps <= 20) return Math.round(map(sliderVal, 0, 100, 1, maxSteps));
-    if (sliderVal <= 50) return Math.round(map(sliderVal, 0, 50, 1, 20));
-    return Math.round(map(sliderVal, 50, 100, 20, maxSteps));
-}
-function fromLogSteps(stepsVal, maxSteps = 100) {
-    if (maxSteps <= 20) return map(stepsVal, 1, maxSteps, 0, 100);
-    if (stepsVal <= 20) return map(stepsVal, 1, 20, 0, 50);
-    return map(stepsVal, 20, maxSteps, 50, 100);
-}
-
-const defaultColorPresets = [
-    { colors: ['#ffffff'], name: 'White' },
-    { colors: ['#ff6b35', '#ff3366'], name: 'Sunset' },
-    { colors: ['#ff3366', '#00d4ff'], name: 'Neon' },
-    { colors: ['#00d4ff', '#ffffff'], name: 'Ice' },
-    { colors: ['#ffcc00', '#ff6b35', '#ff3366'], name: 'Fire' },
-    { colors: ['#00ff88', '#00d4ff', '#8855ff'], name: 'Aurora' }
-];
-
-const defaultBgPresets = [
-    { colors: ['#000000'], dir: 'solid', name: 'Black' },
-    { colors: ['#ffffff'], dir: 'solid', name: 'White' },
-    { colors: ['#0a0a1a', '#1a1a3e'], dir: 'vertical', name: 'Night' },
-    { colors: ['#1a0a2a', '#0a1a2a'], dir: 'horizontal', name: 'Deep' }
-];
-
 const state = {
     canvas: null, canvasWidth: 800, canvasHeight: 800,
-    pattern: 'lines',
     ...JSON.parse(JSON.stringify(DEFAULTS)),
-    colorPresets: [...defaultColorPresets],
-    bgPresets: [...defaultBgPresets],
+    colorPresets: [],
+    bgPresets: [],
     layers: [], activeLayerId: null
 };
 
-// Utilities
+// Logarithmic Steps Helpers
+function toLogSteps(sliderVal, maxSteps = 100) {
+    if (maxSteps <= 20) return Math.round(mapV(sliderVal, 0, 100, 1, maxSteps));
+    if (sliderVal <= 50) return Math.round(mapV(sliderVal, 0, 50, 1, 20));
+    return Math.round(mapV(sliderVal, 50, 100, 20, maxSteps));
+}
+function fromLogSteps(stepsVal, maxSteps = 100) {
+    if (maxSteps <= 20) return mapV(stepsVal, 1, maxSteps, 0, 100);
+    if (stepsVal <= 20) return mapV(stepsVal, 1, 20, 0, 50);
+    return mapV(stepsVal, 20, maxSteps, 50, 100);
+}
+
+// Color Utils
 function hexToRgb(hex) {
     const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 255, g: 255, b: 255 };
 }
 
 function lerpColor3(c1, c2, t) {
-    return { r: Math.round(c1.r + (c2.r - c1.r) * t), g: Math.round(c1.g + (c2.g - c1.g) * t), b: Math.round(c1.b + (c2.b - c1.b) * t) };
+    return {
+        r: Math.round(c1.r + (c2.r - c1.r) * t),
+        g: Math.round(c1.g + (c2.g - c1.g) * t),
+        b: Math.round(c1.b + (c2.b - c1.b) * t)
+    };
 }
 
 function applyCurve(t, type) {
@@ -69,460 +82,281 @@ function applyCurve(t, type) {
 
 function getValueWithFade(range, rawT, fs, fe, curve, steps, mult) {
     const fStart = fs / 100, fEnd = fe / 100;
-
-    // Apply steps (quantize time/progress) like color
     let t = rawT;
     if (steps && steps < 100) {
         t = Math.floor(t * steps) / (steps - 1);
-        t = Math.min(1, t);
+        t = Math.min(1, Math.max(0, t));
     }
-
     let val;
     if (t <= fStart) val = range.start;
     else if (t >= fEnd) val = range.end;
-    else val = lerp(range.start, range.end, applyCurve((t - fStart) / (fEnd - fStart), curve));
-
+    else val = lerpV(range.start, range.end, applyCurve((t - fStart) / (fEnd - fStart), curve));
     return val * (mult ?? 1);
 }
 
 function getGradientColor(colors, rawT, fadeStart, fadeEnd, steps) {
+    if (!colors || colors.length === 0) return { r: 255, g: 255, b: 255 };
     if (colors.length === 1) return hexToRgb(colors[0]);
 
-    // Apply fade position
     const fs = (fadeStart ?? 0) / 100, fe = (fadeEnd ?? 100) / 100;
     let t;
     if (rawT <= fs) t = 0;
     else if (rawT >= fe) t = 1;
     else t = (rawT - fs) / (fe - fs);
 
-    // Apply steps (posterization)
     if (steps && steps < 100) {
         t = Math.floor(t * steps) / (steps - 1);
-        t = Math.min(1, t);
+        t = Math.min(1, Math.max(0, t));
     }
 
-    const seg = (colors.length - 1) * t;
-    const i = Math.floor(seg);
-    return lerpColor3(hexToRgb(colors[Math.min(i, colors.length - 1)]), hexToRgb(colors[Math.min(i + 1, colors.length - 1)]), seg - i);
+    const scaledT = t * (colors.length - 1);
+    const index = Math.floor(scaledT);
+    const innerT = scaledT - index;
+
+    if (index >= colors.length - 1) return hexToRgb(colors[colors.length - 1]);
+    return lerpColor3(hexToRgb(colors[index]), hexToRgb(colors[index + 1]), innerT);
 }
 
-function getAxisProgress(col, row, cX, cY, axis) {
-    const tx = cX > 1 ? col / (cX - 1) : 0.5, ty = cY > 1 ? row / (cY - 1) : 0.5;
-    return axis === 'x' ? tx : axis === 'y' ? ty : (tx + ty) / 2;
-}
+// --- SETUP & DRAW ---
 
-// Layer System
-function createLayerFromState() {
-    const layer = { id: Date.now(), name: `Layer ${state.layers.length + 1}`, visible: true, pattern: state.pattern };
-    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
-        if (typeof state[p] === 'object') layer[p] = { ...state[p] };
-        else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
-            if (state[p + s] !== undefined) layer[p + s] = state[p + s];
-        });
-    });
-    layer.colors = [...state.colors];
-    layer.colorMode = state.colorMode;
-    layer.colorAxis = state.colorAxis;
-    layer.colorFadeStart = state.colorFadeStart;
-    layer.colorFadeEnd = state.colorFadeEnd;
-    layer.colorSteps = state.colorSteps;
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
-    return layer;
-}
-
-function createLayer() {
-    const layer = createLayerFromState();
-    state.layers.push(layer);
-    state.activeLayerId = layer.id;
-    updateLayersUI();
-    return layer;
-}
-
-function deleteLayer(id) {
-    if (state.layers.length <= 1) return;
-    const i = state.layers.findIndex(l => l.id === id);
-    if (i !== -1) {
-        state.layers.splice(i, 1);
-        if (state.activeLayerId === id) {
-            state.activeLayerId = state.layers[state.layers.length - 1].id;
-            loadLayerToState(getActiveLayer());
-        }
-        updateLayersUI();
-    }
-}
-
-function getActiveLayer() { return state.layers.find(l => l.id === state.activeLayerId); }
-
-function selectLayer(id) {
-    state.activeLayerId = id;
-    loadLayerToState(getActiveLayer());
-    updateLayersUI();
-}
-
-function loadLayerToState(layer) {
-    if (!layer) return;
-    state.pattern = layer.pattern;
-    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
-        if (typeof layer[p] === 'object') state[p] = { ...layer[p] };
-        else state[p] = layer[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
-            if (layer[p + s] !== undefined) state[p + s] = layer[p + s];
-        });
-    });
-    state.colors = [...layer.colors];
-    state.colorMode = layer.colorMode;
-    state.colorAxis = layer.colorAxis;
-    state.colorFadeStart = layer.colorFadeStart ?? DEFAULTS.colorFadeStart;
-    state.colorFadeEnd = layer.colorFadeEnd ?? DEFAULTS.colorFadeEnd;
-    state.colorSteps = layer.colorSteps ?? DEFAULTS.colorSteps;
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => state[p] = layer[p]);
-    syncUIWithState();
-}
-
-function saveStateToActiveLayer() {
-    const layer = getActiveLayer();
-    if (!layer) return;
-    layer.pattern = state.pattern;
-    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
-        if (typeof state[p] === 'object') layer[p] = { ...state[p] };
-        else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps', 'Fit'].forEach(s => {
-            if (state[p + s] !== undefined) layer[p + s] = state[p + s];
-        });
-    });
-    layer.colors = [...state.colors];
-    layer.colorMode = state.colorMode;
-    layer.colorAxis = state.colorAxis;
-    layer.colorFadeStart = state.colorFadeStart;
-    layer.colorFadeEnd = state.colorFadeEnd;
-    layer.colorSteps = state.colorSteps;
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
-    updateLayersUI();
-}
-
-function moveLayer(id, direction) {
-    const idx = state.layers.findIndex(l => l.id === id);
-    if (idx === -1) return;
-    const newIdx = direction === 'up' ? idx + 1 : idx - 1;
-    if (newIdx < 0 || newIdx >= state.layers.length) return;
-    [state.layers[idx], state.layers[newIdx]] = [state.layers[newIdx], state.layers[idx]];
-    updateLayersUI();
-}
-
-function updateLayersUI() {
-    const list = document.getElementById('layersList');
-    if (!list) return;
-    list.innerHTML = '';
-    [...state.layers].reverse().forEach((layer, i) => {
-        const realIdx = state.layers.length - 1 - i;
-        const item = document.createElement('div');
-        item.className = `layer-item${layer.id === state.activeLayerId ? ' active' : ''}`;
-        item.innerHTML = `
-            <div class="layer-visibility ${layer.visible ? 'visible' : ''}">${layer.visible ? '◉' : '○'}</div>
-            <div class="layer-info">
-                <div class="layer-name">${layer.name}</div>
-                <div class="layer-pattern">${layer.pattern}</div>
-            </div>
-            <div class="layer-arrows">
-                <button class="layer-arrow up" ${realIdx === state.layers.length - 1 ? 'disabled' : ''}>↑</button>
-                <button class="layer-arrow down" ${realIdx === 0 ? 'disabled' : ''}>↓</button>
-            </div>
-            <button class="layer-delete">×</button>`;
-        item.addEventListener('click', e => { if (!e.target.closest('.layer-visibility, .layer-delete, .layer-arrow')) selectLayer(layer.id); });
-        item.querySelector('.layer-visibility').onclick = e => { e.stopPropagation(); layer.visible = !layer.visible; updateLayersUI(); };
-        item.querySelector('.layer-delete').onclick = e => { e.stopPropagation(); deleteLayer(layer.id); };
-        item.querySelector('.layer-arrow.up').onclick = e => { e.stopPropagation(); moveLayer(layer.id, 'up'); };
-        item.querySelector('.layer-arrow.down').onclick = e => { e.stopPropagation(); moveLayer(layer.id, 'down'); };
-        list.appendChild(item);
-    });
-}
-
-// Pattern Renderers
-function drawLines(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
-
-    // 1. Calculate Weights first (needed for Gap spacing)
-    const weights = [];
-    for (let i = 0; i < count; i++) {
-        const indexT = count > 1 ? i / (count - 1) : 0.5;
-        const axisT = layer.weightAxis === 'x' ? indexT : 0.5;
-        weights.push(getValueWithFade(layer.weight, axisT, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult));
-    }
-
-    // 2. Calculate Positions (Gap-based logic)
-    // Position[i] is the CENTER of the element.
-    // Distance between Center[i-1] and Center[i] = (Weight[i-1] / 2) + Gap + (Weight[i] / 2)
-    let positions = [0];
-    let cumulative = 0;
-    const ABS_UNIT = 40; // Base gap unit. Spacing 1 = 40px Gap.
-
-    for (let i = 1; i < count; i++) {
-        const indexT = count > 1 ? i / (count - 1) : 0.5;
-        const gapMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? indexT : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        const gap = gapMult * ABS_UNIT;
-
-        const dist = (weights[i - 1] / 2) + gap + (weights[i] / 2);
-        cumulative += dist;
-        positions.push(cumulative);
-    }
-
-    const maxCenter = cumulative; // Position of last center (relative to first=0)
-    const fit = layer.spacingFit ?? true;
-
-    // 3. Layout Dimensions & Centering
-    const paddingLeft = weights[0] / 2;
-    const paddingRight = weights[count - 1] / 2;
-    const totalBoundingWidth = maxCenter + paddingLeft + paddingRight;
-
-    let startX = 0;
-    if (!fit) {
-        // Center the Bounding Box in the Canvas
-        const leftEdge = (w - totalBoundingWidth) / 2;
-        startX = leftEdge + paddingLeft;
-    }
-
-    for (let i = 0; i < count; i++) {
-        const indexT = count > 1 ? i / (count - 1) : 0.5;
-        let tx;
-
-        if (fit) {
-            tx = maxCenter > 0.0001 ? positions[i] / maxCenter : 0;
-        } else {
-            tx = (startX + positions[i]) / w;
-        }
-
-        const weight = weights[i];
-        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? indexT : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? indexT : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? indexT : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-
-        const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
-        strokeWeight(max(0.5, weight));
-        stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-        line(x, halfGap, x, h - halfGap);
-    }
-}
-
-function drawRadial(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, radius = Math.min(w, h) * 0.45;
-    for (let i = 0; i < count; i++) {
-        const t = i / count, angle = t * TWO_PI;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-        strokeWeight(max(0.5, weight));
-        stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-        const outerR = radius * spacingMult;
-        const innerR = outerR * (1 - lengthPct);
-        line(cx + cos(angle) * innerR, cy + sin(angle) * innerR, cx + cos(angle) * outerR, cy + sin(angle) * outerR);
-    }
-}
-
-function drawCircles(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, maxR = Math.min(w, h) * 0.45;
-    noFill();
-    for (let i = 0; i < count; i++) {
-        const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        const r = (t * 0.9 + 0.1) * maxR * spacingMult;
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-        strokeWeight(max(0.5, weight));
-        stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-        circle(cx, cy, r * 2);
-    }
-}
-
-function drawGrid(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, gs = Math.max(2, Math.round(sqrt(layer.count))), cW = w / gs, cH = h / gs;
-    noFill();
-    for (let row = 0; row < gs; row++) {
-        for (let col = 0; col < gs; col++) {
-            const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
-            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-            const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-            const lt = getAxisProgress(col, row, gs, gs, layer.lengthAxis);
-            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-            const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-            const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
-            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-            strokeWeight(max(0.5, weight));
-            stroke(c.r, c.g, c.b, opacityVal / 100 * 255);
-            const rw = cW * sizeMult * spacingMult, rh = cH * sizeMult * spacingMult;
-            const x = col * cW, y = row * cH;
-            rect(x + (cW - rw) / 2, y + (cH - rh) / 2, rw, rh);
-        }
-    }
-}
-
-function drawDots(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, gs = Math.max(2, Math.round(sqrt(layer.count))), cW = w / gs, cH = h / gs;
-    noStroke();
-    for (let row = 0; row < gs; row++) {
-        for (let col = 0; col < gs; col++) {
-            const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
-            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-            const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult) * 2 * spacingMult;
-            const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-            const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
-            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-            fill(c.r, c.g, c.b, opacityVal / 100 * 255);
-            circle(col * cW + cW / 2, row * cH + cH / 2, dotSize);
-        }
-    }
-}
-
-function drawTriangle(layer) {
-    const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
-    const topX = w / 2, topY = h * 0.1, leftY = h * 0.9;
-    for (let i = 0; i < count; i++) {
-        const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        const adjustedT = t * spacingMult;
-        const y = lerp(topY, leftY, Math.min(1, adjustedT)), progress = (y - topY) / (leftY - topY);
-        const xLeft = lerp(topX, w * 0.1, progress), xRight = lerp(topX, w * 0.9, progress);
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
-        strokeWeight(max(0.5, weight));
-        stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-        line(xLeft, y, xRight, y);
-    }
-}
-
-function renderLayer(layer) {
-    push();
-    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2;
-    translate(cx, cy);
-    rotate(radians(layer.rotZ));
-    scale(1, cos(radians(layer.rotX)));
-    applyMatrix(1, 0, tan(radians(layer.rotY * 0.5)), 1, 0, 0);
-    translate((layer.posX - 50) * w / 100, (layer.posY - 50) * h / 100);
-    scale(layer.scale / 100);
-    translate(-cx, -cy);
-    const renderers = { lines: drawLines, radial: drawRadial, circles: drawCircles, grid: drawGrid, dots: drawDots, triangle: drawTriangle };
-    if (renderers[layer.pattern]) renderers[layer.pattern](layer);
-    pop();
-}
-
-function drawBackground() {
-    const w = state.canvasWidth, h = state.canvasHeight, colors = state.bgColors;
-    if (state.bgMode === 'solid' || colors.length === 1) {
-        const c = hexToRgb(colors[0]);
-        background(c.r, c.g, c.b);
-    } else if (state.bgDir === 'vertical') {
-        for (let y = 0; y < h; y++) { const c = getGradientColor(colors, y / h); stroke(c.r, c.g, c.b); line(0, y, w, y); }
-    } else if (state.bgDir === 'horizontal') {
-        for (let x = 0; x < w; x++) { const c = getGradientColor(colors, x / w); stroke(c.r, c.g, c.b); line(x, 0, x, h); }
-    } else if (state.bgDir === 'radial') {
-        const maxR = Math.max(w, h) * 0.7, cx = w / 2, cy = h / 2;
-        noStroke();
-        for (let r = maxR; r > 0; r -= 2) { const c = getGradientColor(colors, 1 - r / maxR); fill(c.r, c.g, c.b); circle(cx, cy, r * 2); }
-    }
-}
-
-// p5.js
 function setup() {
-    state.canvas = createCanvas(state.canvasWidth, state.canvasHeight);
-    state.canvas.parent('canvas');
-    pixelDensity(2);
-    frameRate(60);
-    document.getElementById('resWidth').value = state.canvasWidth;
-    document.getElementById('resHeight').value = state.canvasHeight;
-    createLayer();
-    initUI();
+    try {
+        state.canvas = createCanvas(800, 800, WEBGL);
+        state.canvas.parent('canvas');
+
+        // Error handling for initUI
+        try {
+            initUI();
+        } catch (e) {
+            console.error("UI Init Error:", e);
+        }
+
+        state.layers.push({ id: Date.now(), ...JSON.parse(JSON.stringify(DEFAULTS)) });
+        state.activeLayerId = state.layers[0].id;
+
+        updateLayersUI();
+        loadLayerToState(state.layers[0]);
+        applyResolution();
+    } catch (e) {
+        alert("Setup Error: " + e.message);
+    }
 }
 
 function draw() {
-    drawBackground();
-    state.layers.forEach(layer => { if (layer.visible) renderLayer(layer); });
+    try {
+        const rx = radians(state.rotX), ry = radians(state.rotY), rz = radians(state.rotZ);
+        const tx = map(state.posX, 0, 100, -width / 2, width / 2);
+        const ty = map(state.posY, 0, 100, -height / 2, height / 2);
+        const sc = state.scale / 100;
+
+        if (state.bgMode === 'solid' && state.bgColors.length > 0) background(state.bgColors[0]);
+        else drawGradientBackground();
+
+        push();
+        translate(tx, ty, 0);
+        rotateX(rx); rotateY(ry); rotateZ(rz);
+        scale(sc);
+
+        state.layers.forEach(layer => {
+            if (layer.visible !== false) {
+                if (layer.id === state.activeLayerId) {
+                    Object.assign(layer, getCurrentStateData());
+                }
+                renderLayer(layer);
+            }
+        });
+
+        pop();
+    } catch (e) {
+        // Prevent spamming
+        if (frameCount % 60 === 0) console.error("Draw Error:", e);
+    }
 }
 
-// UI Init
+function getCurrentStateData() {
+    const keys = Object.keys(DEFAULTS).filter(k => k !== 'bgColors' && k !== 'bgMode' && k !== 'bgDir');
+    const data = {};
+    keys.forEach(k => {
+        if (Array.isArray(state[k])) data[k] = [...state[k]];
+        else if (typeof state[k] === 'object') data[k] = { ...state[k] };
+        else data[k] = state[k];
+    });
+    return data;
+}
+
+function drawGradientBackground() {
+    push();
+    resetMatrix();
+    translate(-width / 2, -height / 2);
+    noStroke();
+    const stops = state.bgColors.length - 1;
+    if (stops < 1) { background(0); pop(); return; }
+
+    if (state.bgDir === 'vertical') {
+        for (let y = 0; y <= height; y += 4) { // Optimization: step 4
+            const t = y / height;
+            const c = getGradientColor(state.bgColors, t, 0, 100);
+            fill(c.r, c.g, c.b);
+            rect(0, y, width, 4);
+        }
+    } else {
+        for (let x = 0; x <= width; x += 4) {
+            const t = x / width;
+            const c = getGradientColor(state.bgColors, t, 0, 100);
+            fill(c.r, c.g, c.b);
+            rect(x, 0, 4, height);
+        }
+    }
+    pop();
+}
+
+// --- RENDER LOGIC ---
+
+function renderLayer(layer) {
+    const cols = layer.cols || 10;
+    const rows = layer.rows || 10;
+    const cellW = state.canvasWidth / cols;
+    const cellH = state.canvasHeight / rows;
+    const startX = -state.canvasWidth / 2;
+    const startY = -state.canvasHeight / 2;
+
+    for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+            const normX = cols > 1 ? col / (cols - 1) : 0;
+            const normY = rows > 1 ? row / (rows - 1) : 0;
+
+            const wX = getValueWithFade(layer.weightX, normX, layer.weightXFadeStart, layer.weightXFadeEnd, layer.weightXCurve, layer.weightXSteps, layer.weightXMult);
+            const wY = getValueWithFade(layer.weightY, normY, layer.weightYFadeStart, layer.weightYFadeEnd, layer.weightYCurve, layer.weightYSteps, layer.weightYMult);
+            const weight = (wX + wY) / 2;
+
+            const oX = getValueWithFade(layer.opacityX, normX, layer.opacityXFadeStart, layer.opacityXFadeEnd, layer.opacityXCurve, layer.opacityXSteps, layer.opacityXMult);
+            const oY = getValueWithFade(layer.opacityY, normY, layer.opacityYFadeStart, layer.opacityYFadeEnd, layer.opacityYCurve, layer.opacityYSteps, layer.opacityYMult);
+            const opacity = (oX + oY) / 2;
+
+            const lX = getValueWithFade(layer.lengthX, normX, layer.lengthXFadeStart, layer.lengthXFadeEnd, layer.lengthXCurve, layer.lengthXSteps, layer.lengthXMult);
+            const lY = getValueWithFade(layer.lengthY, normY, layer.lengthYFadeStart, layer.lengthYFadeEnd, layer.lengthYCurve, layer.lengthYSteps, layer.lengthYMult);
+            const lenPct = (lX + lY) / 2;
+
+            const rX = getValueWithFade(layer.rotationX, normX, layer.rotationXFadeStart, layer.rotationXFadeEnd, layer.rotationXCurve, layer.rotationXSteps, layer.rotationXMult);
+            const rY = getValueWithFade(layer.rotationY, normY, layer.rotationYFadeStart, layer.rotationYFadeEnd, layer.rotationYCurve, layer.rotationYSteps, layer.rotationYMult);
+            const rotation = rX + rY;
+
+            const cProgress = layer.colorAxis === 'y' ? normY : normX;
+            const colVal = (layer.colorMode === 'fade')
+                ? getGradientColor(layer.colors, cProgress, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps)
+                : hexToRgb(layer.colors[0]);
+
+            push();
+            const cx = startX + col * cellW + cellW / 2;
+            const cy = startY + row * cellH + cellH / 2;
+            translate(cx, cy, 0);
+            rotateZ(radians(rotation));
+
+            stroke(colVal.r, colVal.g, colVal.b, mapV(opacity, 0, 100, 0, 255));
+            strokeWeight(Math.max(0.1, weight)); // Ensure visible weight
+            noFill();
+
+            const maxSize = Math.min(cellW, cellH);
+            const actualSize = maxSize * (lenPct / 100);
+
+            if (layer.shape === 'circles') {
+                circle(0, 0, actualSize);
+            } else {
+                line(0, -actualSize / 2, 0, actualSize / 2);
+            }
+            pop();
+        }
+    }
+}
+
+// --- UI SETUP ---
+
 function initUI() {
-    // Patterns
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.shape-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.shape-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            state.pattern = btn.dataset.pattern;
+            state.shape = btn.dataset.shape;
             saveStateToActiveLayer();
-        });
+        };
     });
 
-    // Count
-    setupSingleControl('count', 'countValue', 'countSlider');
+    setupSingleControl('cols', 'colsValue', 'colsSlider');
+    setupSingleControl('rows', 'rowsValue', 'rowsSlider');
 
-    // Range controls
-    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
-        setupRangeControl(param);
-        setupAxisToggle(param);
-        setupFadePosition(param);
-    });
+    setupAttributeGroup('rotation');
+    setupAttributeGroup('weight');
+    setupAttributeGroup('length');
+    setupAttributeGroup('opacity');
 
-    // Colors
     setupColorSystem();
+
+    setupSingleControl('rotX', 'rotXValue', 'rotX');
+    setupSingleControl('rotY', 'rotYValue', 'rotY');
+    setupSingleControl('rotZ', 'rotZValue', 'rotZ');
+    setupSingleControl('posX', 'posXValue', null);
+    setupSingleControl('posY', 'posYValue', null);
+    setupSingleControl('scale', 'scaleValue', 'scaleSlider');
+
     setupBgSystem();
 
-    // Transform
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(param => {
-        const slider = document.getElementById(param);
-        const input = document.getElementById(`${param}Value`);
-        if (slider && input) {
-            slider.oninput = () => { state[param] = parseFloat(slider.value); input.value = slider.value; saveStateToActiveLayer(); };
-            input.oninput = () => { state[param] = parseFloat(input.value) || 0; slider.value = state[param]; saveStateToActiveLayer(); };
-        }
-    });
-
-    // Resolution
-    document.getElementById('resApply').onclick = applyResolution;
-
-    // Resets
-    document.querySelectorAll('.resetable').forEach(el => el.addEventListener('dblclick', () => resetAttribute(el.dataset.reset)));
-
-    // Layers
-    document.getElementById('addLayerBtn').onclick = createLayer;
-
-    // Toolbar
     document.getElementById('resetBtn').onclick = resetAll;
     document.getElementById('randomBtn').onclick = randomize;
-    document.getElementById('exportPng').onclick = () => saveCanvas('vector-lab-' + Date.now(), 'png');
+    document.getElementById('exportPng').onclick = () => saveCanvas('pattern', 'png');
     document.getElementById('saveJson').onclick = saveProject;
     document.getElementById('loadJson').onchange = loadProject;
+    document.getElementById('resApply').onclick = applyResolution;
 
-    // Keyboard
-    document.onkeydown = e => {
-        if (e.target.matches('input, select')) return;
-        if (e.code === 'Space') { e.preventDefault(); randomize(); }
-        if (e.code === 'KeyR') resetAll();
-    };
+    document.querySelectorAll('.resetable').forEach(el => {
+        el.onclick = () => resetAttribute(el.dataset.reset);
+    });
 
-    updateColorStops();
-    updateBgStops();
-    renderColorPresets();
-    renderBgPresets();
+    const addLayerBtn = document.getElementById('addLayer');
+    if (addLayerBtn) addLayerBtn.onclick = addNewLayer;
+}
+
+function setupAttributeGroup(param) {
+    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
+    if (toggle) {
+        toggle.querySelectorAll('.axis-btn').forEach(btn => {
+            btn.onclick = () => {
+                const axis = btn.dataset.axis;
+                toggle.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                const xContent = document.getElementById(`${param}XContent`);
+                const yContent = document.getElementById(`${param}YContent`);
+
+                if (xContent) {
+                    xContent.classList.toggle('active', axis === 'x');
+                    xContent.classList.toggle('hidden', axis !== 'x');
+                }
+                if (yContent) {
+                    yContent.classList.toggle('active', axis === 'y');
+                    yContent.classList.toggle('hidden', axis !== 'y');
+                }
+            };
+        });
+    }
+    setupRangeControl(`${param}X`);
+    setupRangeControl(`${param}Y`);
+    setupAdvancedControls(`${param}X`);
+    setupAdvancedControls(`${param}Y`);
 }
 
 function setupSingleControl(param, inputId, sliderId) {
-    const input = document.getElementById(inputId), slider = document.getElementById(sliderId);
-    input.oninput = () => {
-        slider.value = input.value;
-        state[param] = parseFloat(input.value);
-        if (param === 'count') updateStepsLimit(state.count);
+    const input = document.getElementById(inputId);
+    const slider = sliderId ? document.getElementById(sliderId) : null;
+    if (input) input.oninput = () => {
+        const v = parseFloat(input.value);
+        if (slider) slider.value = v;
+        state[param] = v;
         saveStateToActiveLayer();
     };
-    slider.oninput = () => {
-        input.value = slider.value;
-        state[param] = parseFloat(slider.value);
-        if (param === 'count') updateStepsLimit(state.count);
+    if (slider) slider.oninput = () => {
+        const v = parseFloat(slider.value);
+        if (input) input.value = v;
+        state[param] = v;
         saveStateToActiveLayer();
     };
 }
@@ -531,13 +365,19 @@ function setupRangeControl(param) {
     const sI = document.getElementById(`${param}Start`), eI = document.getElementById(`${param}End`);
     const sS = document.getElementById(`${param}SliderStart`), eS = document.getElementById(`${param}SliderEnd`);
     const range = document.getElementById(`${param}Range`);
+
+    if (!sI || !eI || !sS || !eS || !range) return;
+
     function update() {
         const min = parseFloat(sS.min), max = parseFloat(sS.max);
         const startPct = ((parseFloat(sS.value) - min) / (max - min)) * 100;
         const endPct = ((parseFloat(eS.value) - min) / (max - min)) * 100;
+
         range.style.left = `${Math.min(startPct, endPct)}%`;
         range.style.right = `${100 - Math.max(startPct, endPct)}%`;
-        state[param] = { start: parseFloat(sS.value), end: parseFloat(eS.value) };
+
+        state[param].start = parseFloat(sS.value);
+        state[param].end = parseFloat(eS.value);
         saveStateToActiveLayer();
     }
     sI.oninput = () => { sS.value = sI.value; update(); };
@@ -547,120 +387,96 @@ function setupRangeControl(param) {
     update();
 }
 
-function setupAxisToggle(param) {
-    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
-    if (!toggle) return;
-    toggle.querySelectorAll('.axis-btn').forEach(btn => {
-        btn.onclick = () => {
-            toggle.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state[`${param}Axis`] = btn.dataset.axis;
-            saveStateToActiveLayer();
-        };
-    });
-}
-
-function setupFadePosition(param) {
-    const fs = document.getElementById(`${param}FadeStart`), fe = document.getElementById(`${param}FadeEnd`), curve = document.getElementById(`${param}Curve`);
+function setupAdvancedControls(param) {
+    const fs = document.getElementById(`${param}FadeStart`), fe = document.getElementById(`${param}FadeEnd`);
     if (fs) fs.oninput = () => { state[`${param}FadeStart`] = parseFloat(fs.value); saveStateToActiveLayer(); };
     if (fe) fe.oninput = () => { state[`${param}FadeEnd`] = parseFloat(fe.value); saveStateToActiveLayer(); };
 
-    const mult = document.getElementById(`${param}Mult`);
-    const steps = document.getElementById(`${param}Steps`);
-    const stepsInput = document.getElementById(`${param}StepsInput`);
+    const curve = document.getElementById(`${param}Curve`);
+    if (curve) curve.oninput = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
 
+    const mult = document.getElementById(`${param}Mult`);
     if (mult) mult.oninput = () => { state[`${param}Mult`] = parseFloat(mult.value); saveStateToActiveLayer(); };
+
+    const steps = document.getElementById(`${param}Steps`), stepsInput = document.getElementById(`${param}StepsInput`);
     if (steps) steps.oninput = () => {
-        const maxVal = state.count || 100;
-        const val = toLogSteps(parseInt(steps.value), maxVal);
-        state[`${param}Steps`] = val;
-        if (stepsInput) stepsInput.value = val;
+        state[`${param}Steps`] = toLogSteps(parseInt(steps.value), 100);
+        if (stepsInput) stepsInput.value = state[`${param}Steps`];
         saveStateToActiveLayer();
     };
     if (stepsInput) stepsInput.oninput = () => {
-        const maxVal = state.count || 100;
         let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > maxVal) val = maxVal;
         state[`${param}Steps`] = val;
-        if (steps) steps.value = fromLogSteps(val, maxVal);
+        if (steps) steps.value = fromLogSteps(val, 100);
         saveStateToActiveLayer();
     };
-
-    if (param === 'spacing') {
-        const fitBtn = document.getElementById('spacingFitBtn');
-        if (fitBtn) fitBtn.onclick = () => {
-            state.spacingFit = !state.spacingFit;
-            syncUIWithState();
-            saveStateToActiveLayer();
-        };
-    }
 }
 
-function updateStepsLimit(maxVal) {
-    if (!maxVal) maxVal = 100;
-    ['weight', 'spacing', 'length', 'opacity', 'color'].forEach(p => {
-        const input = document.getElementById(`${p}StepsInput`);
-        const slider = document.getElementById(`${p}Steps`);
-
-        if (input) input.max = maxVal;
-
-        const stepsKey = p === 'color' ? 'colorSteps' : `${p}Steps`;
-        let current = state[stepsKey];
-
-        // Clamp if current exceeds new max
-        if (current > maxVal) {
-            state[stepsKey] = maxVal;
-            current = maxVal;
-            if (input) input.value = current;
-        }
-
-        // Update slider position to reflect current steps within new range
-        if (slider) slider.value = fromLogSteps(current, maxVal);
-    });
-}
-
-
-
-// Color System
 function setupColorSystem() {
     document.getElementById('colorModeSolid').onclick = () => { state.colorMode = 'solid'; updateColorMode(); saveStateToActiveLayer(); };
     document.getElementById('colorModeFade').onclick = () => { state.colorMode = 'fade'; updateColorMode(); saveStateToActiveLayer(); };
     document.getElementById('addColorStop').onclick = () => { state.colors.push('#ffffff'); updateColorStops(); saveStateToActiveLayer(); };
     document.getElementById('saveColorPreset').onclick = saveColorPreset;
-    setupAxisToggle('color');
 
-    // Color fade position
+    const toggle = document.getElementById('colorAxisToggle');
+    if (toggle) toggle.querySelectorAll('.axis-btn').forEach(btn => {
+        btn.onclick = () => {
+            toggle.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.colorAxis = btn.dataset.axis;
+            saveStateToActiveLayer();
+        };
+    });
+
     const cfs = document.getElementById('colorFadeStart'), cfe = document.getElementById('colorFadeEnd');
     if (cfs) cfs.oninput = () => { state.colorFadeStart = parseFloat(cfs.value); saveStateToActiveLayer(); };
     if (cfe) cfe.oninput = () => { state.colorFadeEnd = parseFloat(cfe.value); saveStateToActiveLayer(); };
 
-    // Color steps
-    const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
-    if (stepsSlider) stepsSlider.oninput = () => {
-        const maxVal = state.count || 100;
-        state.colorSteps = toLogSteps(parseInt(stepsSlider.value), maxVal);
+    const steps = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
+    if (steps) steps.oninput = () => {
+        state.colorSteps = toLogSteps(parseInt(steps.value), 100);
         if (stepsInput) stepsInput.value = state.colorSteps;
         saveStateToActiveLayer();
     };
-    if (stepsInput) stepsInput.oninput = () => {
-        const maxVal = state.count || 100;
-        let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > maxVal) val = maxVal;
-        state.colorSteps = val;
-        if (stepsSlider) stepsSlider.value = fromLogSteps(val, maxVal);
-        saveStateToActiveLayer();
-    };
+    renderColorPresets();
+
+    // Default Presets Init
+    state.colorPresets = [...defaultColorPresets];
+    renderColorPresets();
+}
+
+function renderColorPresets() {
+    const container = document.getElementById('colorPresets');
+    if (!container) return;
+    container.innerHTML = '';
+    state.colorPresets.forEach((preset, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'color-preset';
+        btn.style.background = preset.colors.length === 1 ? preset.colors[0] : `linear-gradient(135deg, ${preset.colors.join(', ')})`;
+        btn.onclick = () => {
+            state.colors = [...preset.colors];
+            state.colorMode = preset.colors.length > 1 ? 'fade' : 'solid';
+            updateColorStops(); updateColorMode(); saveStateToActiveLayer();
+        };
+        container.appendChild(btn);
+    });
 }
 
 function updateColorMode() {
-    document.getElementById('colorModeSolid').classList.toggle('active', state.colorMode === 'solid');
-    document.getElementById('colorModeFade').classList.toggle('active', state.colorMode === 'fade');
-    document.getElementById('colorAxisToggle').classList.toggle('hidden', state.colorMode === 'solid');
-    document.getElementById('colorFadeControls').classList.toggle('hidden', state.colorMode === 'solid');
+    const solidBtn = document.getElementById('colorModeSolid');
+    const fadeBtn = document.getElementById('colorModeFade');
+    const axisToggle = document.getElementById('colorAxisToggle');
+    const fadeControls = document.getElementById('colorFadeControls');
+
+    if (solidBtn) solidBtn.classList.toggle('active', state.colorMode === 'solid');
+    if (fadeBtn) fadeBtn.classList.toggle('active', state.colorMode === 'fade');
+    if (axisToggle) axisToggle.classList.toggle('hidden', state.colorMode === 'solid');
+    if (fadeControls) fadeControls.classList.toggle('hidden', state.colorMode === 'solid');
 }
 
 function updateColorStops() {
     const container = document.getElementById('colorStops');
+    if (!container) return;
     container.innerHTML = '';
     state.colors.forEach((color, i) => {
         const stop = document.createElement('div');
@@ -676,26 +492,7 @@ function updateColorStops() {
 
 function updateGradientPreview() {
     const bar = document.getElementById('colorGradientPreview');
-    bar.style.background = state.colors.length === 1 ? state.colors[0] : `linear-gradient(90deg, ${state.colors.join(', ')})`;
-}
-
-function renderColorPresets() {
-    const container = document.getElementById('colorPresets');
-    container.innerHTML = '';
-    state.colorPresets.forEach((preset, i) => {
-        const btn = document.createElement('button');
-        btn.className = 'color-preset';
-        btn.style.background = preset.colors.length === 1 ? preset.colors[0] : `linear-gradient(135deg, ${preset.colors.join(', ')})`;
-        btn.title = preset.name;
-        if (i >= defaultColorPresets.length) btn.innerHTML = '<button class="delete-preset">×</button>';
-        btn.onclick = e => {
-            if (e.target.classList.contains('delete-preset')) { state.colorPresets.splice(i, 1); renderColorPresets(); return; }
-            state.colors = [...preset.colors];
-            state.colorMode = preset.colors.length > 1 ? 'fade' : 'solid';
-            updateColorStops(); updateColorMode(); saveStateToActiveLayer();
-        };
-        container.appendChild(btn);
-    });
+    if (bar) bar.style.background = state.colors.length === 1 ? state.colors[0] : `linear-gradient(90deg, ${state.colors.join(', ')})`;
 }
 
 function saveColorPreset() {
@@ -703,12 +500,23 @@ function saveColorPreset() {
     renderColorPresets();
 }
 
-// Background System
+// BG System
+const defaultColorPresets = [
+    { colors: ['#ffffff'], name: 'White' },
+    { colors: ['#ff6b35', '#ff3366'], name: 'Sunset' },
+    { colors: ['#ff3366', '#00d4ff'], name: 'Neon' }
+];
+
 function setupBgSystem() {
+    state.bgPresets = [
+        { colors: ['#000000'], dir: 'solid', name: 'Black' },
+        { colors: ['#0a0a1a', '#1a1a3e'], dir: 'vertical', name: 'Night' }
+    ];
+
     document.getElementById('bgModeSolid').onclick = () => { state.bgMode = 'solid'; updateBgMode(); };
     document.getElementById('bgModeFade').onclick = () => { state.bgMode = 'fade'; updateBgMode(); };
     document.getElementById('addBgStop').onclick = () => { state.bgColors.push('#333333'); updateBgStops(); };
-    document.getElementById('saveBgPreset').onclick = saveBgPreset;
+
     document.querySelectorAll('.bg-direction .dir-btn').forEach(btn => {
         btn.onclick = () => {
             document.querySelectorAll('.bg-direction .dir-btn').forEach(b => b.classList.remove('active'));
@@ -716,6 +524,7 @@ function setupBgSystem() {
             state.bgDir = btn.dataset.dir;
         };
     });
+    updateBgStops(); renderBgPresets();
 }
 
 function updateBgMode() {
@@ -731,110 +540,77 @@ function updateBgStops() {
         const stop = document.createElement('div');
         stop.className = 'color-stop';
         stop.innerHTML = `<input type="color" value="${color}">${state.bgColors.length > 1 ? '<button class="remove-stop">×</button>' : ''}`;
-        stop.querySelector('input').oninput = e => { state.bgColors[i] = e.target.value; updateBgPreview(); };
+        stop.querySelector('input').oninput = e => { state.bgColors[i] = e.target.value; };
         const rm = stop.querySelector('.remove-stop');
         if (rm) rm.onclick = () => { state.bgColors.splice(i, 1); updateBgStops(); };
         container.appendChild(stop);
     });
-    updateBgPreview();
 }
-
-function updateBgPreview() {
-    const bar = document.getElementById('bgGradientPreview');
-    bar.style.background = state.bgColors.length === 1 ? state.bgColors[0] : `linear-gradient(90deg, ${state.bgColors.join(', ')})`;
-}
-
 function renderBgPresets() {
     const container = document.getElementById('bgPresets');
     container.innerHTML = '';
-    state.bgPresets.forEach((preset, i) => {
+    state.bgPresets.forEach(preset => {
         const btn = document.createElement('button');
         btn.className = 'color-preset';
         btn.style.background = preset.colors.length === 1 ? preset.colors[0] : `linear-gradient(135deg, ${preset.colors.join(', ')})`;
-        btn.title = preset.name;
-        if (i >= defaultBgPresets.length) btn.innerHTML = '<button class="delete-preset">×</button>';
-        btn.onclick = e => {
-            if (e.target.classList.contains('delete-preset')) { state.bgPresets.splice(i, 1); renderBgPresets(); return; }
+        btn.onclick = () => {
             state.bgColors = [...preset.colors];
-            state.bgMode = preset.colors.length > 1 ? 'fade' : 'solid';
-            state.bgDir = preset.dir || 'vertical';
+            state.bgMode = preset.dir === 'solid' ? 'solid' : 'fade';
+            state.bgDir = preset.dir;
             updateBgStops(); updateBgMode();
         };
         container.appendChild(btn);
     });
 }
 
-function saveBgPreset() {
-    state.bgPresets.push({ colors: [...state.bgColors], dir: state.bgDir, name: `Custom ${state.bgPresets.length + 1}` });
-    renderBgPresets();
-}
-
-function applyResolution() {
-    const w = parseInt(document.getElementById('resWidth').value) || 800;
-    const h = parseInt(document.getElementById('resHeight').value) || 800;
-    state.canvasWidth = constrain(w, 100, 4000);
-    state.canvasHeight = constrain(h, 100, 4000);
-    resizeCanvas(state.canvasWidth, state.canvasHeight);
+// Helpers
+function resetAttribute(param) {
+    if (['rotation', 'weight', 'length', 'opacity'].includes(param)) {
+        ['X', 'Y'].forEach(axis => {
+            const p = param + axis;
+            state[p] = { ...DEFAULTS[p] };
+            state[p + 'FadeStart'] = DEFAULTS[p + 'FadeStart'];
+            state[p + 'FadeEnd'] = DEFAULTS[p + 'FadeEnd'];
+            state[p + 'Curve'] = DEFAULTS[p + 'Curve'];
+            state[p + 'Steps'] = DEFAULTS[p + 'Steps'];
+            state[p + 'Mult'] = DEFAULTS[p + 'Mult'];
+        });
+    } else if (param === 'grid') {
+        state.cols = DEFAULTS.cols;
+        state.rows = DEFAULTS.rows;
+    } else if (param === 'color') {
+        state.colors = [...DEFAULTS.colors];
+        state.colorMode = DEFAULTS.colorMode;
+    }
+    syncUIWithState();
 }
 
 function syncUIWithState() {
-    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.pattern === state.pattern));
-    document.getElementById('countValue').value = state.count;
-    document.getElementById('countSlider').value = state.count;
-    // Dynamic Steps Limit Update
-    updateStepsLimit(state.count);
+    document.querySelectorAll('.shape-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.shape === state.shape));
 
-    ['weight', 'spacing', 'length', 'opacity'].forEach(p => {
-        document.getElementById(`${p}Start`).value = state[p].start;
-        document.getElementById(`${p}End`).value = state[p].end;
-        document.getElementById(`${p}SliderStart`).value = state[p].start;
-        document.getElementById(`${p}SliderEnd`).value = state[p].end;
-        document.getElementById(`${p}FadeStart`).value = state[`${p}FadeStart`];
-        document.getElementById(`${p}FadeEnd`).value = state[`${p}FadeEnd`];
-        document.getElementById(`${p}Curve`).value = state[`${p}Curve`];
-        const mult = document.getElementById(`${p}Mult`);
-        const steps = document.getElementById(`${p}Steps`);
-        const stepsInput = document.getElementById(`${p}StepsInput`);
-        if (mult) mult.value = state[`${p}Mult`] ?? 1;
-        if (steps) steps.value = fromLogSteps(state[`${p}Steps`] ?? 100, state.count);
-        if (stepsInput) stepsInput.value = state[`${p}Steps`] ?? 100;
+    document.getElementById('colsValue').value = state.cols;
+    document.getElementById('colsSlider').value = state.cols;
+    document.getElementById('rowsValue').value = state.rows;
+    document.getElementById('rowsSlider').value = state.rows;
+
+    ['rotation', 'weight', 'length', 'opacity'].forEach(param => {
+        ['X', 'Y'].forEach(axis => {
+            const p = param + axis;
+            const startSlider = document.getElementById(`${p}SliderStart`);
+            if (startSlider) {
+                document.getElementById(`${p}Start`).value = state[p].start;
+                document.getElementById(`${p}End`).value = state[p].end;
+                document.getElementById(`${p}SliderStart`).value = state[p].start;
+                document.getElementById(`${p}SliderEnd`).value = state[p].end;
+                document.getElementById(`${p}FadeStart`).value = state[`${p}FadeStart`];
+                document.getElementById(`${p}FadeEnd`).value = state[`${p}FadeEnd`];
+                document.getElementById(`${p}Curve`).value = state[`${p}Curve`];
+                document.getElementById(`${p}Mult`).value = state[`${p}Mult`] ?? 1;
+                document.getElementById(`${p}StepsInput`).value = state[`${p}Steps`] ?? 100;
+            }
+        });
     });
-    // Spacing Fit Sync
-    const fitBtn = document.getElementById('spacingFitBtn');
-    if (fitBtn) fitBtn.classList.toggle('active', state.spacingFit ?? true);
-
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => {
-        const s = document.getElementById(p), i = document.getElementById(`${p}Value`);
-        if (s) s.value = state[p];
-        if (i) i.value = state[p];
-    });
-    // Color fade sync
-    const cfs = document.getElementById('colorFadeStart'), cfe = document.getElementById('colorFadeEnd');
-    const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
-    if (cfs) cfs.value = state.colorFadeStart;
-    if (cfe) cfe.value = state.colorFadeEnd;
-    if (stepsSlider) stepsSlider.value = fromLogSteps(state.colorSteps, state.count);
-    if (stepsInput) stepsInput.value = state.colorSteps;
-    updateColorStops();
-    updateColorMode();
-}
-
-function resetAttribute(param) {
-    if (param === 'count') state.count = DEFAULTS.count;
-    else if (['weight', 'spacing', 'length', 'opacity'].includes(param)) {
-        state[param] = { ...DEFAULTS[param] };
-        state[`${param}FadeStart`] = DEFAULTS[`${param}FadeStart`];
-        state[`${param}FadeEnd`] = DEFAULTS[`${param}FadeEnd`];
-        state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
-        state[`${param}Mult`] = DEFAULTS[`${param}Mult`];
-        state[`${param}Steps`] = DEFAULTS[`${param}Steps`];
-        if (param === 'spacing') state.spacingFit = DEFAULTS.spacingFit;
-    }
-    else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) state[param] = DEFAULTS[param];
-    else if (param === 'color') { state.colors = [...DEFAULTS.colors]; state.colorMode = 'solid'; }
-    else if (param === 'bg') { state.bgColors = [...DEFAULTS.bgColors]; state.bgMode = 'solid'; }
-    syncUIWithState();
-    saveStateToActiveLayer();
+    updateColorStops(); updateColorMode();
 }
 
 function resetAll() {
@@ -844,36 +620,80 @@ function resetAll() {
         else state[k] = DEFAULTS[k];
     });
     syncUIWithState();
-    updateBgStops();
-    updateBgMode();
     saveStateToActiveLayer();
 }
 
 function randomize() {
-    const patterns = ['lines', 'radial', 'circles', 'grid', 'dots', 'triangle'];
-    state.pattern = patterns[floor(random(patterns.length))];
-    state.count = floor(random(10, 60));
-    state.weight = { start: random(0.5, 15), end: random(0.5, 15) };
-    state.spacing = { start: random(0.5, 2), end: random(0.5, 2) };
-    state.length = { start: random(50, 100), end: random(50, 100) };
-    state.opacity = { start: random(60, 100), end: random(60, 100) };
-    const preset = state.colorPresets[floor(random(state.colorPresets.length))];
-    state.colors = [...preset.colors];
-    state.colorMode = preset.colors.length > 1 ? 'fade' : 'solid';
-    state.rotZ = floor(random(-90, 90));
+    state.cols = Math.floor(Math.random() * 45) + 5;
+    state.rows = Math.floor(Math.random() * 45) + 5;
+    ['rotation', 'weight', 'length', 'opacity'].forEach(param => {
+        ['X', 'Y'].forEach(axis => {
+            const key = param + axis;
+            const min = param === 'rotation' ? -180 : (param === 'length' || param === 'opacity' ? 20 : 1);
+            const max = param === 'rotation' ? 180 : (param === 'length' || param === 'opacity' ? 100 : 20);
+            state[key].start = Math.floor(Math.random() * (max - min)) + min;
+            state[key].end = Math.floor(Math.random() * (max - min)) + min;
+        });
+    });
     syncUIWithState();
     saveStateToActiveLayer();
 }
 
-function saveProject() {
-    const project = { version: '5.0', resolution: { width: state.canvasWidth, height: state.canvasHeight }, bg: { colors: state.bgColors, mode: state.bgMode, dir: state.bgDir }, layers: state.layers, colorPresets: state.colorPresets, bgPresets: state.bgPresets };
-    const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `vector-lab-${Date.now()}.json`;
-    a.click();
+function addNewLayer() {
+    const id = Date.now();
+    state.layers.push({ id, ...JSON.parse(JSON.stringify(DEFAULTS)) });
+    state.activeLayerId = id;
+    loadLayerToState(state.layers[state.layers.length - 1]);
+    updateLayersUI();
 }
-
+function saveStateToActiveLayer() {
+    const layer = state.layers.find(l => l.id === state.activeLayerId);
+    if (layer) Object.assign(layer, getCurrentStateData());
+}
+function loadLayerToState(layer) {
+    if (!layer) return;
+    Object.keys(layer).forEach(k => {
+        if (k !== 'id' && k !== 'visible' && k !== 'name' && k in state) {
+            if (Array.isArray(layer[k])) state[k] = [...layer[k]];
+            else if (typeof layer[k] === 'object') state[k] = { ...layer[k] };
+            else state[k] = layer[k];
+        }
+    });
+    syncUIWithState();
+}
+function updateLayersUI() {
+    const container = document.getElementById('layersList');
+    if (!container) return;
+    container.innerHTML = '';
+    state.layers.slice().reverse().forEach(layer => {
+        const el = document.createElement('div');
+        el.className = `layer-item ${layer.id === state.activeLayerId ? 'active' : ''}`;
+        el.innerHTML = `<span class="layer-vis ${layer.visible !== false ? '' : 'hidden'}">👁</span><span class="layer-name">Layer ${state.layers.indexOf(layer) + 1}</span><span class="layer-del">×</span>`;
+        el.onclick = (e) => {
+            if (e.target.classList.contains('layer-vis')) {
+                layer.visible = layer.visible === false ? true : false;
+                e.target.classList.toggle('hidden');
+                return;
+            }
+            if (e.target.classList.contains('layer-del')) {
+                if (state.layers.length <= 1) return;
+                state.layers = state.layers.filter(l => l.id !== layer.id);
+                if (state.activeLayerId === layer.id) state.activeLayerId = state.layers[0].id;
+                loadLayerToState(state.layers.find(l => l.id === state.activeLayerId));
+                updateLayersUI();
+                return;
+            }
+            state.activeLayerId = layer.id;
+            loadLayerToState(layer);
+            updateLayersUI();
+        };
+        container.appendChild(el);
+    });
+}
+function saveProject() {
+    const project = { version: '5.0', state: state };
+    saveJSON(project, `vector-lab-${Date.now()}.json`);
+}
 function loadProject(e) {
     const file = e.target.files[0];
     if (!file) return;
@@ -881,13 +701,18 @@ function loadProject(e) {
     reader.onload = event => {
         try {
             const p = JSON.parse(event.target.result);
-            if (p.resolution) { state.canvasWidth = p.resolution.width; state.canvasHeight = p.resolution.height; resizeCanvas(state.canvasWidth, state.canvasHeight); }
-            if (p.bg) { state.bgColors = p.bg.colors; state.bgMode = p.bg.mode || 'solid'; state.bgDir = p.bg.dir || 'vertical'; updateBgStops(); updateBgMode(); }
-            if (p.layers) { state.layers = p.layers; state.activeLayerId = state.layers[0].id; loadLayerToState(getActiveLayer()); updateLayersUI(); }
-            if (p.colorPresets) { state.colorPresets = p.colorPresets; renderColorPresets(); }
-            if (p.bgPresets) { state.bgPresets = p.bgPresets; renderBgPresets(); }
-        } catch (err) { alert('Error: ' + err.message); }
+            if (p.state) {
+                Object.assign(state, p.state);
+                syncUIWithState();
+            }
+        } catch (err) { console.error(err); }
     };
     reader.readAsText(file);
-    e.target.value = '';
+}
+function applyResolution() {
+    const w = parseInt(document.getElementById('resWidth').value) || 800;
+    const h = parseInt(document.getElementById('resHeight').value) || 800;
+    state.canvasWidth = w;
+    state.canvasHeight = h;
+    resizeCanvas(w, h);
 }

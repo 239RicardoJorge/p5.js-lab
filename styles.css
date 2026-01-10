@@ -311,6 +311,44 @@ body {
     border-color: var(--accent);
 }
 
+/* Shape Selector */
+.shape-selector {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.shape-btn {
+    flex: 1;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+.shape-btn svg {
+    width: 20px;
+    height: 20px;
+    stroke: currentColor;
+    fill: none;
+}
+
+.shape-btn:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.shape-btn.active {
+    background: var(--text-primary);
+    color: var(--bg-app);
+    border-color: var(--text-primary);
+}
+
 /* Preset Grid */
 .preset-grid {
     display: grid;
