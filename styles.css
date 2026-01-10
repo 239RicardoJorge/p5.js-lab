@@ -1,0 +1,761 @@
+/* =========================================
+   VECTOR.LAB — 80s Pattern Generator
+   Elegant, Minimal, Swiss-Inspired Design
+   ========================================= */
+
+:root {
+    /* Colors */
+    --bg-app: #0a0a0a;
+    --bg-sidebar: #111111;
+    --bg-canvas: #000000;
+    --bg-input: #1a1a1a;
+    --bg-hover: #222222;
+
+    --text-primary: #ffffff;
+    --text-secondary: #888888;
+    --text-muted: #555555;
+
+    --accent: #ff6b35;
+    --accent-secondary: #00d4ff;
+
+    --border: #2a2a2a;
+    --border-light: #333333;
+
+    /* Sizing */
+    --sidebar-width: 260px;
+    --right-panel-width: 240px;
+    --toolbar-height: 50px;
+
+    /* Typography */
+    --font-sans: 'Space Grotesk', -apple-system, sans-serif;
+    --font-mono: 'Space Mono', monospace;
+
+    /* Transitions */
+    --transition: 0.15s ease;
+}
+
+/* Reset */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html,
+body {
+    height: 100%;
+    overflow: hidden;
+}
+
+body {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    color: var(--text-primary);
+    background: var(--bg-app);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 4px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 2px;
+}
+
+/* =========================================
+   Layout
+   ========================================= */
+
+.app {
+    display: grid;
+    grid-template-columns: var(--sidebar-width) 1fr var(--right-panel-width);
+    height: 100vh;
+    gap: 1px;
+    background: var(--border);
+}
+
+/* =========================================
+   Sidebar
+   ========================================= */
+
+.sidebar,
+.right-panel {
+    background: var(--bg-sidebar);
+    overflow-y: auto;
+}
+
+/* Brand */
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 18px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.brand-mark {
+    font-size: 22px;
+    color: var(--accent);
+    line-height: 1;
+}
+
+.brand-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.brand-name {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 1px;
+}
+
+.brand-sub {
+    font-size: 9px;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+}
+
+/* Sections */
+.section {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.section-title {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+}
+
+/* Preset Grid */
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+    margin-bottom: 10px;
+}
+
+.preset-btn {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all var(--transition);
+    padding: 6px;
+}
+
+.preset-btn svg {
+    width: 100%;
+    height: 100%;
+    stroke: var(--text-secondary);
+    stroke-width: 1.5;
+    fill: none;
+}
+
+.preset-btn:hover {
+    background: var(--bg-hover);
+    border-color: var(--border-light);
+}
+
+.preset-btn:hover svg {
+    stroke: var(--text-primary);
+}
+
+.preset-btn.active {
+    background: var(--text-primary);
+    border-color: var(--text-primary);
+}
+
+.preset-btn.active svg {
+    stroke: var(--bg-app);
+}
+
+/* Direction Selector */
+.direction-selector {
+    display: flex;
+    gap: 4px;
+}
+
+.dir-btn {
+    flex: 1;
+    padding: 8px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.dir-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.dir-btn.active {
+    background: var(--text-primary);
+    color: var(--bg-app);
+    border-color: var(--text-primary);
+}
+
+/* =========================================
+   Dual Range Slider (Start → End)
+   ========================================= */
+
+.range-control {
+    position: relative;
+}
+
+.range-values {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+}
+
+.range-start {
+    color: var(--accent);
+}
+
+.range-end {
+    color: var(--accent-secondary);
+}
+
+.dual-slider {
+    position: relative;
+    height: 20px;
+}
+
+.dual-slider input[type="range"] {
+    position: absolute;
+    width: 100%;
+    height: 4px;
+    top: 8px;
+    pointer-events: none;
+    -webkit-appearance: none;
+    appearance: none;
+    background: transparent;
+    z-index: 2;
+}
+
+.dual-slider input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: all;
+    border: 2px solid var(--bg-sidebar);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dual-slider .slider-start::-webkit-slider-thumb {
+    background: var(--accent);
+}
+
+.dual-slider .slider-end::-webkit-slider-thumb {
+    background: var(--accent-secondary);
+}
+
+.slider-track {
+    position: absolute;
+    top: 8px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+    z-index: 0;
+}
+
+.slider-range {
+    position: absolute;
+    top: 8px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 2px;
+    z-index: 1;
+}
+
+/* Single Slider */
+.slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--bg-input);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+}
+
+.slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 14px;
+    height: 14px;
+    background: var(--text-primary);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: transform var(--transition);
+}
+
+.slider::-webkit-slider-thumb:hover {
+    transform: scale(1.2);
+}
+
+/* =========================================
+   Color Controls
+   ========================================= */
+
+.color-gradient-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.color-picker {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.color-picker input[type="color"] {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    padding: 2px;
+}
+
+.color-picker input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-picker input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 4px;
+}
+
+.color-label {
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.gradient-preview {
+    flex: 1;
+    height: 36px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+}
+
+.color-presets {
+    display: flex;
+    gap: 6px;
+}
+
+.color-preset {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all var(--transition);
+    overflow: hidden;
+}
+
+.color-preset:hover {
+    transform: scale(1.15);
+    border-color: var(--text-primary);
+}
+
+.color-preset:nth-child(1) {
+    background: #ffffff;
+}
+
+.color-preset:nth-child(2) {
+    background: linear-gradient(135deg, #ff6b35, #ff3366);
+}
+
+.color-preset:nth-child(3) {
+    background: linear-gradient(135deg, #ff3366, #00d4ff);
+}
+
+.color-preset:nth-child(4) {
+    background: linear-gradient(135deg, #ffffff, #000000);
+}
+
+.color-preset:nth-child(5) {
+    background: linear-gradient(135deg, #ffcc00, #ff6b35);
+}
+
+/* =========================================
+   Control Groups
+   ========================================= */
+
+.control-group {
+    margin-bottom: 14px;
+}
+
+.control-group:last-child {
+    margin-bottom: 0;
+}
+
+.control-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.control-value {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+/* =========================================
+   Background Selector
+   ========================================= */
+
+.bg-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.bg-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    border: 2px solid var(--border);
+    background: var(--bg-input);
+    cursor: pointer;
+    transition: all var(--transition);
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.bg-btn span {
+    width: 100%;
+    height: 100%;
+    border-radius: 3px;
+}
+
+.bg-btn:hover {
+    border-color: var(--border-light);
+}
+
+.bg-btn.active {
+    border-color: var(--text-primary);
+}
+
+.bg-btn input[type="color"] {
+    width: 100%;
+    height: 100%;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+}
+
+.bg-btn input[type="color"]::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.bg-btn input[type="color"]::-webkit-color-swatch {
+    border: none;
+    border-radius: 3px;
+}
+
+/* =========================================
+   Layers
+   ========================================= */
+
+.section-layers {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.section-header .section-title {
+    margin-bottom: 0;
+}
+
+.add-layer-btn {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--text-primary);
+    border: none;
+    border-radius: 4px;
+    color: var(--bg-app);
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.add-layer-btn:hover {
+    transform: scale(1.1);
+}
+
+.layers-list {
+    flex: 1;
+    overflow-y: auto;
+}
+
+.layer-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    margin-bottom: 5px;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.layer-item:hover {
+    border-color: var(--border-light);
+}
+
+.layer-item.active {
+    border-color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.layer-visibility {
+    font-size: 10px;
+    color: var(--text-muted);
+    cursor: pointer;
+    width: 18px;
+    text-align: center;
+}
+
+.layer-visibility.visible {
+    color: var(--accent);
+}
+
+.layer-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.layer-name {
+    font-size: 11px;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.layer-pattern {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+}
+
+.layer-delete {
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-size: 14px;
+    cursor: pointer;
+    opacity: 0;
+    transition: all var(--transition);
+}
+
+.layer-item:hover .layer-delete {
+    opacity: 1;
+}
+
+.layer-delete:hover {
+    color: #ff4444;
+    background: rgba(255, 68, 68, 0.1);
+}
+
+/* =========================================
+   Canvas Container
+   ========================================= */
+
+.canvas-container {
+    background: var(--bg-app);
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+#canvasWrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+    overflow: hidden;
+}
+
+#canvas {
+    background: var(--bg-canvas);
+    box-shadow:
+        0 0 0 1px var(--border),
+        0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+#canvas canvas {
+    display: block;
+}
+
+/* Toolbar */
+.toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: var(--toolbar-height);
+    background: var(--bg-sidebar);
+    border-top: 1px solid var(--border);
+}
+
+.toolbar-left,
+.toolbar-right {
+    display: flex;
+    gap: 8px;
+}
+
+.toolbar-center {
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.coordinates {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    letter-spacing: 1px;
+}
+
+.tool-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 34px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.tool-btn svg {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    stroke-width: 2;
+    fill: none;
+}
+
+.tool-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+}
+
+.tool-btn.export {
+    width: auto;
+    padding: 0 12px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.tool-btn.export:hover {
+    background: var(--text-primary);
+    color: var(--bg-app);
+    border-color: var(--text-primary);
+}
+
+/* =========================================
+   Right Panel
+   ========================================= */
+
+.right-panel {
+    display: flex;
+    flex-direction: column;
+}
+
+/* =========================================
+   Responsive
+   ========================================= */
+
+@media (max-width: 1100px) {
+    .app {
+        grid-template-columns: var(--sidebar-width) 1fr;
+    }
+
+    .right-panel {
+        display: none;
+    }
+}
+
+/* =========================================
+   Selection
+   ========================================= */
+
+::selection {
+    background: var(--accent);
+    color: var(--bg-app);
+}
