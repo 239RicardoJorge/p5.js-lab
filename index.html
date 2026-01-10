@@ -5,8 +5,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VECTOR.LAB — 80s Pattern Generator</title>
-    <meta name="description"
-        content="Create elegant 80s-inspired vector patterns with rhythmic lines, geometric gradients, and 3D perspective.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -28,338 +26,261 @@
                 </div>
             </header>
 
-            <!-- Pattern Presets -->
-            <section class="section">
-                <h3 class="section-title">PADRÃO</h3>
-                <div class="preset-grid">
-                    <button class="preset-btn active" data-pattern="lines" title="Linhas">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="4" y1="2" x2="4" y2="22" />
-                            <line x1="9" y1="2" x2="9" y2="22" />
-                            <line x1="14" y1="2" x2="14" y2="22" />
-                            <line x1="19" y1="2" x2="19" y2="22" />
-                        </svg>
-                    </button>
-                    <button class="preset-btn" data-pattern="radial" title="Radial">
-                        <svg viewBox="0 0 24 24">
-                            <line x1="12" y1="12" x2="12" y2="2" />
-                            <line x1="12" y1="12" x2="20" y2="4" />
-                            <line x1="12" y1="12" x2="22" y2="12" />
-                            <line x1="12" y1="12" x2="20" y2="20" />
-                            <line x1="12" y1="12" x2="12" y2="22" />
-                            <line x1="12" y1="12" x2="4" y2="20" />
-                            <line x1="12" y1="12" x2="2" y2="12" />
-                            <line x1="12" y1="12" x2="4" y2="4" />
-                        </svg>
-                    </button>
-                    <button class="preset-btn" data-pattern="circles" title="Círculos">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="12" cy="12" r="10" fill="none" />
-                            <circle cx="12" cy="12" r="7" fill="none" />
-                            <circle cx="12" cy="12" r="4" fill="none" />
-                        </svg>
-                    </button>
-                    <button class="preset-btn" data-pattern="grid" title="Grid">
-                        <svg viewBox="0 0 24 24">
-                            <rect x="3" y="3" width="7" height="7" fill="none" />
-                            <rect x="14" y="3" width="7" height="7" fill="none" />
-                            <rect x="3" y="14" width="7" height="7" fill="none" />
-                            <rect x="14" y="14" width="7" height="7" fill="none" />
-                        </svg>
-                    </button>
-                    <button class="preset-btn" data-pattern="dots" title="Dots">
-                        <svg viewBox="0 0 24 24">
-                            <circle cx="5" cy="5" r="2" />
-                            <circle cx="12" cy="5" r="2" />
-                            <circle cx="19" cy="5" r="2" />
-                            <circle cx="5" cy="12" r="2" />
-                            <circle cx="12" cy="12" r="2" />
-                            <circle cx="19" cy="12" r="2" />
-                        </svg>
-                    </button>
-                    <button class="preset-btn" data-pattern="triangle" title="Triângulo">
-                        <svg viewBox="0 0 24 24">
-                            <polygon points="12,2 22,22 2,22" fill="none" />
-                        </svg>
-                    </button>
-                </div>
+            <div class="sidebar-scroll">
+                <!-- Pattern Presets -->
+                <section class="section">
+                    <h3 class="section-title">PADRÃO</h3>
+                    <div class="preset-grid">
+                        <button class="preset-btn active" data-pattern="lines" title="Linhas">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="4" y1="2" x2="4" y2="22" />
+                                <line x1="9" y1="2" x2="9" y2="22" />
+                                <line x1="14" y1="2" x2="14" y2="22" />
+                                <line x1="19" y1="2" x2="19" y2="22" />
+                            </svg>
+                        </button>
+                        <button class="preset-btn" data-pattern="radial" title="Radial">
+                            <svg viewBox="0 0 24 24">
+                                <line x1="12" y1="12" x2="12" y2="2" />
+                                <line x1="12" y1="12" x2="20" y2="4" />
+                                <line x1="12" y1="12" x2="22" y2="12" />
+                                <line x1="12" y1="12" x2="20" y2="20" />
+                            </svg>
+                        </button>
+                        <button class="preset-btn" data-pattern="circles" title="Círculos">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="12" cy="12" r="10" fill="none" />
+                                <circle cx="12" cy="12" r="6" fill="none" />
+                            </svg>
+                        </button>
+                        <button class="preset-btn" data-pattern="grid" title="Grid">
+                            <svg viewBox="0 0 24 24">
+                                <rect x="3" y="3" width="7" height="7" fill="none" />
+                                <rect x="14" y="3" width="7" height="7" fill="none" />
+                                <rect x="3" y="14" width="7" height="7" fill="none" />
+                                <rect x="14" y="14" width="7" height="7" fill="none" />
+                            </svg>
+                        </button>
+                        <button class="preset-btn" data-pattern="dots" title="Dots">
+                            <svg viewBox="0 0 24 24">
+                                <circle cx="6" cy="6" r="2" />
+                                <circle cx="18" cy="6" r="2" />
+                                <circle cx="6" cy="18" r="2" />
+                                <circle cx="18" cy="18" r="2" />
+                            </svg>
+                        </button>
+                        <button class="preset-btn" data-pattern="triangle" title="Triângulo">
+                            <svg viewBox="0 0 24 24">
+                                <polygon points="12,2 22,22 2,22" fill="none" />
+                            </svg>
+                        </button>
+                    </div>
+                </section>
 
-                <!-- Direction for lines -->
-                <div class="direction-selector" id="directionSelector">
-                    <button class="dir-btn active" data-dir="vertical" title="Vertical">|</button>
-                    <button class="dir-btn" data-dir="horizontal" title="Horizontal">—</button>
-                    <button class="dir-btn" data-dir="diagonal" title="Diagonal">/</button>
-                </div>
-            </section>
+                <!-- Quantidade -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="count">QUANTIDADE</h3>
+                    </div>
+                    <div class="single-control">
+                        <input type="number" class="value-input" id="countValue" value="20" min="2" max="200">
+                        <input type="range" class="slider" id="countSlider" min="2" max="200" value="20">
+                    </div>
+                </section>
 
-            <!-- Quantidade (single value) -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="count">QUANTIDADE</h3>
-                    <div class="anim-toggle" data-param="count">
-                        <button class="anim-btn" title="Animação">⟳</button>
+                <!-- Espessura -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="weight">ESPESSURA</h3>
+                        <div class="axis-toggle">
+                            <button class="axis-btn active" data-axis="x" title="Eixo X">X</button>
+                            <button class="axis-btn" data-axis="y" title="Eixo Y">Y</button>
+                        </div>
                     </div>
-                </div>
-                <div class="single-control" data-param="count">
-                    <input type="number" class="value-input" id="countValue" value="20" min="2" max="200">
-                    <input type="range" class="slider" id="countSlider" min="2" max="200" value="20">
-                </div>
-                <div class="anim-panel hidden" id="countAnimPanel">
-                    <div class="anim-row">
-                        <select class="anim-wave" id="countWave">
-                            <option value="sine">Sine</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="square">Square</option>
-                            <option value="saw">Saw</option>
-                        </select>
-                        <input type="number" class="anim-input" id="countAmp" value="0" min="0" max="100"
-                            title="Amplitude %">
-                        <input type="number" class="anim-input" id="countFreq" value="1" min="0.1" max="10" step="0.1"
-                            title="Frequência">
+                    <div class="range-control" data-param="weight">
+                        <div class="range-inputs">
+                            <input type="number" class="value-input start" id="weightStart" value="2" step="0.5"
+                                min="0.5" max="50">
+                            <span class="range-arrow">→</span>
+                            <input type="number" class="value-input end" id="weightEnd" value="2" step="0.5" min="0.5"
+                                max="50">
+                        </div>
+                        <div class="dual-slider">
+                            <input type="range" class="slider-track-input" id="weightSliderStart" min="0.5" max="50"
+                                step="0.5" value="2">
+                            <input type="range" class="slider-track-input" id="weightSliderEnd" min="0.5" max="50"
+                                step="0.5" value="2">
+                            <div class="slider-track"></div>
+                            <div class="slider-range" id="weightRange"></div>
+                        </div>
+                        <div class="effect-position">
+                            <label>Fade:</label>
+                            <input type="range" class="pos-slider dual" id="weightFadeStart" min="0" max="100" value="0"
+                                title="Início do fade">
+                            <input type="range" class="pos-slider dual" id="weightFadeEnd" min="0" max="100" value="100"
+                                title="Fim do fade">
+                            <select class="curve-select" id="weightCurve">
+                                <option value="linear">Linear</option>
+                                <option value="easeIn">Ease In</option>
+                                <option value="easeOut">Ease Out</option>
+                                <option value="easeInOut">Ease In-Out</option>
+                            </select>
+                        </div>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Espessura (range with curve) -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="weight">ESPESSURA</h3>
-                    <div class="anim-toggle" data-param="weight">
-                        <button class="anim-btn" title="Animação">⟳</button>
+                <!-- Espaçamento -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="spacing">ESPAÇAMENTO</h3>
+                        <div class="axis-toggle">
+                            <button class="axis-btn active" data-axis="x" title="Eixo X">X</button>
+                            <button class="axis-btn" data-axis="y" title="Eixo Y">Y</button>
+                        </div>
                     </div>
-                </div>
-                <div class="range-control" data-param="weight">
-                    <div class="range-inputs">
-                        <input type="number" class="value-input start" id="weightStart" value="2" step="0.5" min="0.5"
-                            max="50">
-                        <span class="range-arrow">→</span>
-                        <input type="number" class="value-input end" id="weightEnd" value="2" step="0.5" min="0.5"
-                            max="50">
+                    <div class="range-control" data-param="spacing">
+                        <div class="range-inputs">
+                            <input type="number" class="value-input start" id="spacingStart" value="1" step="0.1"
+                                min="0.1" max="5">
+                            <span class="range-arrow">→</span>
+                            <input type="number" class="value-input end" id="spacingEnd" value="1" step="0.1" min="0.1"
+                                max="5">
+                        </div>
+                        <div class="dual-slider">
+                            <input type="range" class="slider-track-input" id="spacingSliderStart" min="0.1" max="5"
+                                step="0.1" value="1">
+                            <input type="range" class="slider-track-input" id="spacingSliderEnd" min="0.1" max="5"
+                                step="0.1" value="1">
+                            <div class="slider-track"></div>
+                            <div class="slider-range" id="spacingRange"></div>
+                        </div>
+                        <div class="effect-position">
+                            <label>Fade:</label>
+                            <input type="range" class="pos-slider dual" id="spacingFadeStart" min="0" max="100"
+                                value="0">
+                            <input type="range" class="pos-slider dual" id="spacingFadeEnd" min="0" max="100"
+                                value="100">
+                            <select class="curve-select" id="spacingCurve">
+                                <option value="linear">Linear</option>
+                                <option value="easeIn">Ease In</option>
+                                <option value="easeOut">Ease Out</option>
+                                <option value="easeInOut">Ease In-Out</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="dual-slider">
-                        <input type="range" class="slider-track-input" id="weightSliderStart" min="0.5" max="50"
-                            step="0.5" value="2">
-                        <input type="range" class="slider-track-input" id="weightSliderEnd" min="0.5" max="50"
-                            step="0.5" value="2">
-                        <div class="slider-track"></div>
-                        <div class="slider-range" id="weightRange"></div>
-                    </div>
-                    <div class="curve-row">
-                        <label>Curva:</label>
-                        <select class="curve-select" id="weightCurve">
-                            <option value="linear">Linear</option>
-                            <option value="easeIn">Ease In</option>
-                            <option value="easeOut">Ease Out</option>
-                            <option value="easeInOut">Ease In-Out</option>
-                            <option value="step">Step</option>
-                        </select>
-                        <label>Pos:</label>
-                        <input type="range" class="pos-slider" id="weightPos" min="0" max="100" value="50"
-                            title="Posição do ponto médio">
-                    </div>
-                </div>
-                <div class="anim-panel hidden" id="weightAnimPanel">
-                    <div class="anim-row">
-                        <select class="anim-wave" id="weightWave">
-                            <option value="sine">Sine</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="square">Square</option>
-                            <option value="saw">Saw</option>
-                        </select>
-                        <input type="number" class="anim-input" id="weightAmp" value="0" min="0" max="100"
-                            title="Amplitude %">
-                        <input type="number" class="anim-input" id="weightFreq" value="1" min="0.1" max="10" step="0.1"
-                            title="Frequência">
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Espaçamento -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="spacing">ESPAÇAMENTO</h3>
-                    <div class="anim-toggle" data-param="spacing">
-                        <button class="anim-btn" title="Animação">⟳</button>
+                <!-- Comprimento -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="length">COMPRIMENTO</h3>
+                        <div class="axis-toggle">
+                            <button class="axis-btn active" data-axis="x" title="Eixo X">X</button>
+                            <button class="axis-btn" data-axis="y" title="Eixo Y">Y</button>
+                        </div>
                     </div>
-                </div>
-                <div class="range-control" data-param="spacing">
-                    <div class="range-inputs">
-                        <input type="number" class="value-input start" id="spacingStart" value="1" step="0.1" min="0.1"
-                            max="5">
-                        <span class="range-arrow">→</span>
-                        <input type="number" class="value-input end" id="spacingEnd" value="1" step="0.1" min="0.1"
-                            max="5">
+                    <div class="range-control" data-param="length">
+                        <div class="range-inputs">
+                            <input type="number" class="value-input start" id="lengthStart" value="100" min="0"
+                                max="100">
+                            <span class="range-arrow">→</span>
+                            <input type="number" class="value-input end" id="lengthEnd" value="100" min="0" max="100">
+                        </div>
+                        <div class="dual-slider">
+                            <input type="range" class="slider-track-input" id="lengthSliderStart" min="0" max="100"
+                                value="100">
+                            <input type="range" class="slider-track-input" id="lengthSliderEnd" min="0" max="100"
+                                value="100">
+                            <div class="slider-track"></div>
+                            <div class="slider-range" id="lengthRange"></div>
+                        </div>
+                        <div class="effect-position">
+                            <label>Fade:</label>
+                            <input type="range" class="pos-slider dual" id="lengthFadeStart" min="0" max="100"
+                                value="0">
+                            <input type="range" class="pos-slider dual" id="lengthFadeEnd" min="0" max="100"
+                                value="100">
+                            <select class="curve-select" id="lengthCurve">
+                                <option value="linear">Linear</option>
+                                <option value="easeIn">Ease In</option>
+                                <option value="easeOut">Ease Out</option>
+                                <option value="easeInOut">Ease In-Out</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="dual-slider">
-                        <input type="range" class="slider-track-input" id="spacingSliderStart" min="0.1" max="5"
-                            step="0.1" value="1">
-                        <input type="range" class="slider-track-input" id="spacingSliderEnd" min="0.1" max="5"
-                            step="0.1" value="1">
-                        <div class="slider-track"></div>
-                        <div class="slider-range" id="spacingRange"></div>
-                    </div>
-                    <div class="curve-row">
-                        <label>Curva:</label>
-                        <select class="curve-select" id="spacingCurve">
-                            <option value="linear">Linear</option>
-                            <option value="easeIn">Ease In</option>
-                            <option value="easeOut">Ease Out</option>
-                            <option value="easeInOut">Ease In-Out</option>
-                            <option value="step">Step</option>
-                        </select>
-                        <label>Pos:</label>
-                        <input type="range" class="pos-slider" id="spacingPos" min="0" max="100" value="50">
-                    </div>
-                </div>
-                <div class="anim-panel hidden" id="spacingAnimPanel">
-                    <div class="anim-row">
-                        <select class="anim-wave" id="spacingWave">
-                            <option value="sine">Sine</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="square">Square</option>
-                            <option value="saw">Saw</option>
-                        </select>
-                        <input type="number" class="anim-input" id="spacingAmp" value="0" min="0" max="100">
-                        <input type="number" class="anim-input" id="spacingFreq" value="1" min="0.1" max="10"
-                            step="0.1">
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Comprimento -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="length">COMPRIMENTO</h3>
-                    <div class="anim-toggle" data-param="length">
-                        <button class="anim-btn" title="Animação">⟳</button>
+                <!-- Opacidade -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="opacity">OPACIDADE</h3>
+                        <div class="axis-toggle">
+                            <button class="axis-btn active" data-axis="x" title="Eixo X">X</button>
+                            <button class="axis-btn" data-axis="y" title="Eixo Y">Y</button>
+                        </div>
                     </div>
-                </div>
-                <div class="range-control" data-param="length">
-                    <div class="range-inputs">
-                        <input type="number" class="value-input start" id="lengthStart" value="100" min="0" max="100">
-                        <span class="range-arrow">→</span>
-                        <input type="number" class="value-input end" id="lengthEnd" value="100" min="0" max="100">
+                    <div class="range-control" data-param="opacity">
+                        <div class="range-inputs">
+                            <input type="number" class="value-input start" id="opacityStart" value="100" min="0"
+                                max="100">
+                            <span class="range-arrow">→</span>
+                            <input type="number" class="value-input end" id="opacityEnd" value="100" min="0" max="100">
+                        </div>
+                        <div class="dual-slider">
+                            <input type="range" class="slider-track-input" id="opacitySliderStart" min="0" max="100"
+                                value="100">
+                            <input type="range" class="slider-track-input" id="opacitySliderEnd" min="0" max="100"
+                                value="100">
+                            <div class="slider-track"></div>
+                            <div class="slider-range" id="opacityRange"></div>
+                        </div>
+                        <div class="effect-position">
+                            <label>Fade:</label>
+                            <input type="range" class="pos-slider dual" id="opacityFadeStart" min="0" max="100"
+                                value="0">
+                            <input type="range" class="pos-slider dual" id="opacityFadeEnd" min="0" max="100"
+                                value="100">
+                            <select class="curve-select" id="opacityCurve">
+                                <option value="linear">Linear</option>
+                                <option value="easeIn">Ease In</option>
+                                <option value="easeOut">Ease Out</option>
+                                <option value="easeInOut">Ease In-Out</option>
+                            </select>
+                        </div>
                     </div>
-                    <div class="dual-slider">
-                        <input type="range" class="slider-track-input" id="lengthSliderStart" min="0" max="100"
-                            value="100">
-                        <input type="range" class="slider-track-input" id="lengthSliderEnd" min="0" max="100"
-                            value="100">
-                        <div class="slider-track"></div>
-                        <div class="slider-range" id="lengthRange"></div>
-                    </div>
-                    <div class="curve-row">
-                        <label>Curva:</label>
-                        <select class="curve-select" id="lengthCurve">
-                            <option value="linear">Linear</option>
-                            <option value="easeIn">Ease In</option>
-                            <option value="easeOut">Ease Out</option>
-                            <option value="easeInOut">Ease In-Out</option>
-                            <option value="step">Step</option>
-                        </select>
-                        <label>Pos:</label>
-                        <input type="range" class="pos-slider" id="lengthPos" min="0" max="100" value="50">
-                    </div>
-                </div>
-                <div class="anim-panel hidden" id="lengthAnimPanel">
-                    <div class="anim-row">
-                        <select class="anim-wave" id="lengthWave">
-                            <option value="sine">Sine</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="square">Square</option>
-                            <option value="saw">Saw</option>
-                        </select>
-                        <input type="number" class="anim-input" id="lengthAmp" value="0" min="0" max="100">
-                        <input type="number" class="anim-input" id="lengthFreq" value="1" min="0.1" max="10" step="0.1">
-                    </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Opacidade -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="opacity">OPACIDADE</h3>
-                    <div class="anim-toggle" data-param="opacity">
-                        <button class="anim-btn" title="Animação">⟳</button>
+                <!-- Cor -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="color">COR</h3>
+                        <div class="axis-toggle">
+                            <button class="axis-btn active" data-axis="x" title="Eixo X">X</button>
+                            <button class="axis-btn" data-axis="y" title="Eixo Y">Y</button>
+                        </div>
                     </div>
-                </div>
-                <div class="range-control" data-param="opacity">
-                    <div class="range-inputs">
-                        <input type="number" class="value-input start" id="opacityStart" value="100" min="0" max="100">
-                        <span class="range-arrow">→</span>
-                        <input type="number" class="value-input end" id="opacityEnd" value="100" min="0" max="100">
-                    </div>
-                    <div class="dual-slider">
-                        <input type="range" class="slider-track-input" id="opacitySliderStart" min="0" max="100"
-                            value="100">
-                        <input type="range" class="slider-track-input" id="opacitySliderEnd" min="0" max="100"
-                            value="100">
-                        <div class="slider-track"></div>
-                        <div class="slider-range" id="opacityRange"></div>
-                    </div>
-                    <div class="curve-row">
-                        <label>Curva:</label>
-                        <select class="curve-select" id="opacityCurve">
-                            <option value="linear">Linear</option>
-                            <option value="easeIn">Ease In</option>
-                            <option value="easeOut">Ease Out</option>
-                            <option value="easeInOut">Ease In-Out</option>
-                            <option value="step">Step</option>
-                        </select>
-                        <label>Pos:</label>
-                        <input type="range" class="pos-slider" id="opacityPos" min="0" max="100" value="50">
-                    </div>
-                </div>
-                <div class="anim-panel hidden" id="opacityAnimPanel">
-                    <div class="anim-row">
-                        <select class="anim-wave" id="opacityWave">
-                            <option value="sine">Sine</option>
-                            <option value="triangle">Triangle</option>
-                            <option value="square">Square</option>
-                            <option value="saw">Saw</option>
-                        </select>
-                        <input type="number" class="anim-input" id="opacityAmp" value="0" min="0" max="100">
-                        <input type="number" class="anim-input" id="opacityFreq" value="1" min="0.1" max="10"
-                            step="0.1">
-                    </div>
-                </div>
-            </section>
 
-            <!-- Cor -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="color">COR</h3>
-                    <div class="mode-toggle">
-                        <button class="mode-btn active" data-mode="solid" id="colorModeSolid">Solid</button>
-                        <button class="mode-btn" data-mode="fade" id="colorModeFade">Fade</button>
+                    <div class="color-gradient-container">
+                        <div class="color-stops" id="colorStops">
+                            <!-- Color stops will be added here dynamically -->
+                        </div>
+                        <div class="gradient-bar" id="gradientBar"></div>
+                        <button class="add-color-btn" id="addColorBtn" title="Adicionar cor">+</button>
                     </div>
-                </div>
 
-                <div class="color-solid" id="colorSolidUI">
-                    <input type="color" class="color-input-large" id="colorSolid" value="#ffffff">
-                </div>
-
-                <div class="color-fade hidden" id="colorFadeUI">
-                    <div class="color-gradient-row">
-                        <input type="color" class="color-input" id="colorStart" value="#ffffff">
-                        <div class="gradient-preview" id="colorGradientPreview"></div>
-                        <input type="color" class="color-input" id="colorEnd" value="#ffffff">
+                    <div class="color-presets">
+                        <button class="color-preset" data-colors="#ffffff" style="background:#fff"></button>
+                        <button class="color-preset" data-colors="#ff6b35,#ff3366"
+                            style="background:linear-gradient(90deg,#ff6b35,#ff3366)"></button>
+                        <button class="color-preset" data-colors="#ff3366,#00d4ff"
+                            style="background:linear-gradient(90deg,#ff3366,#00d4ff)"></button>
+                        <button class="color-preset" data-colors="#00d4ff,#ffffff"
+                            style="background:linear-gradient(90deg,#00d4ff,#fff)"></button>
+                        <button class="color-preset" data-colors="#ffcc00,#ff6b35,#ff3366"
+                            style="background:linear-gradient(90deg,#ffcc00,#ff6b35,#ff3366)"></button>
                     </div>
-                </div>
-
-                <div class="color-presets">
-                    <button class="color-preset" data-start="#ffffff" data-end="#ffffff"
-                        style="background:#fff"></button>
-                    <button class="color-preset" data-start="#ff6b35" data-end="#ff3366"
-                        style="background:linear-gradient(135deg,#ff6b35,#ff3366)"></button>
-                    <button class="color-preset" data-start="#ff3366" data-end="#00d4ff"
-                        style="background:linear-gradient(135deg,#ff3366,#00d4ff)"></button>
-                    <button class="color-preset" data-start="#00d4ff" data-end="#ffffff"
-                        style="background:linear-gradient(135deg,#00d4ff,#fff)"></button>
-                    <button class="color-preset" data-start="#ffcc00" data-end="#ff6b35"
-                        style="background:linear-gradient(135deg,#ffcc00,#ff6b35)"></button>
-                </div>
-            </section>
+                </section>
+            </div>
         </aside>
 
         <!-- Canvas Container -->
@@ -371,7 +292,7 @@
             <!-- Toolbar -->
             <div class="toolbar">
                 <div class="toolbar-left">
-                    <button class="tool-btn" id="resetBtn" title="Reset All (R)">
+                    <button class="tool-btn" id="resetBtn" title="Reset (R)">
                         <svg viewBox="0 0 24 24">
                             <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
                             <path d="M3 3v5h5" />
@@ -399,10 +320,9 @@
                 </div>
 
                 <div class="toolbar-right">
-                    <button class="tool-btn export" id="exportPng" title="Export PNG">PNG</button>
-                    <button class="tool-btn export" id="exportSvg" title="Export SVG">SVG</button>
-                    <button class="tool-btn export" id="saveJson" title="Save Project">JSON</button>
-                    <label class="tool-btn export" title="Load Project">
+                    <button class="tool-btn export" id="exportPng">PNG</button>
+                    <button class="tool-btn export" id="saveJson">JSON</button>
+                    <label class="tool-btn export">
                         LOAD
                         <input type="file" id="loadJson" accept=".json" hidden>
                     </label>
@@ -412,106 +332,96 @@
 
         <!-- Right Panel -->
         <aside class="right-panel">
-            <!-- 3D Rotation -->
-            <section class="section">
-                <h3 class="section-title">ROTAÇÃO 3D</h3>
+            <div class="right-panel-scroll">
+                <!-- 3D Rotation -->
+                <section class="section">
+                    <h3 class="section-title">ROTAÇÃO 3D</h3>
 
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="rotX">X</span>
-                        <input type="number" class="value-input-small" id="rotXValue" value="0" min="-90" max="90">
-                    </label>
-                    <input type="range" class="slider" id="rotX" min="-90" max="90" value="0">
-                </div>
-
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="rotY">Y</span>
-                        <input type="number" class="value-input-small" id="rotYValue" value="0" min="-90" max="90">
-                    </label>
-                    <input type="range" class="slider" id="rotY" min="-90" max="90" value="0">
-                </div>
-
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="rotZ">Z</span>
-                        <input type="number" class="value-input-small" id="rotZValue" value="0" min="-180" max="180">
-                    </label>
-                    <input type="range" class="slider" id="rotZ" min="-180" max="180" value="0">
-                </div>
-            </section>
-
-            <!-- Position & Scale -->
-            <section class="section">
-                <h3 class="section-title">POSIÇÃO</h3>
-
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="posX">X</span>
-                        <input type="number" class="value-input-small" id="posXValue" value="50" min="0" max="100">
-                    </label>
-                    <input type="range" class="slider" id="posX" min="0" max="100" value="50">
-                </div>
-
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="posY">Y</span>
-                        <input type="number" class="value-input-small" id="posYValue" value="50" min="0" max="100">
-                    </label>
-                    <input type="range" class="slider" id="posY" min="0" max="100" value="50">
-                </div>
-
-                <div class="control-row">
-                    <label class="control-label">
-                        <span class="resetable" data-reset="scale">Escala</span>
-                        <input type="number" class="value-input-small" id="scaleValue" value="100" min="10" max="200">
-                    </label>
-                    <input type="range" class="slider" id="scale" min="10" max="200" value="100">
-                </div>
-            </section>
-
-            <!-- Background -->
-            <section class="section">
-                <div class="attr-header">
-                    <h3 class="section-title resetable" data-reset="bg">FUNDO</h3>
-                    <div class="mode-toggle">
-                        <button class="mode-btn active" data-mode="solid" id="bgModeSolid">Solid</button>
-                        <button class="mode-btn" data-mode="fade" id="bgModeFade">Fade</button>
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="rotX">X</span>
+                            <input type="number" class="value-input-small" id="rotXValue" value="0" min="-90" max="90">
+                        </label>
+                        <input type="range" class="slider" id="rotX" min="-90" max="90" value="0">
                     </div>
-                </div>
 
-                <div class="bg-solid" id="bgSolidUI">
-                    <div class="bg-presets">
-                        <button class="bg-btn active" data-color="#000000" style="background:#000"></button>
-                        <button class="bg-btn" data-color="#ffffff" style="background:#fff"></button>
-                        <button class="bg-btn" data-color="#f5f0e8" style="background:#f5f0e8"></button>
-                        <button class="bg-btn" data-color="#1a1a2e" style="background:#1a1a2e"></button>
-                        <input type="color" class="bg-custom" id="bgSolidColor" value="#000000">
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="rotY">Y</span>
+                            <input type="number" class="value-input-small" id="rotYValue" value="0" min="-90" max="90">
+                        </label>
+                        <input type="range" class="slider" id="rotY" min="-90" max="90" value="0">
                     </div>
-                </div>
 
-                <div class="bg-fade hidden" id="bgFadeUI">
-                    <div class="color-gradient-row">
-                        <input type="color" class="color-input" id="bgStart" value="#000000">
-                        <div class="gradient-preview" id="bgGradientPreview"></div>
-                        <input type="color" class="color-input" id="bgEnd" value="#1a1a2e">
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="rotZ">Z</span>
+                            <input type="number" class="value-input-small" id="rotZValue" value="0" min="-180"
+                                max="180">
+                        </label>
+                        <input type="range" class="slider" id="rotZ" min="-180" max="180" value="0">
                     </div>
+                </section>
+
+                <!-- Position & Scale -->
+                <section class="section">
+                    <h3 class="section-title">POSIÇÃO</h3>
+
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="posX">X</span>
+                            <input type="number" class="value-input-small" id="posXValue" value="50" min="0" max="100">
+                        </label>
+                        <input type="range" class="slider" id="posX" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="posY">Y</span>
+                            <input type="number" class="value-input-small" id="posYValue" value="50" min="0" max="100">
+                        </label>
+                        <input type="range" class="slider" id="posY" min="0" max="100" value="50">
+                    </div>
+
+                    <div class="control-row">
+                        <label class="control-label">
+                            <span class="resetable" data-reset="scale">Escala</span>
+                            <input type="number" class="value-input-small" id="scaleValue" value="100" min="10"
+                                max="200">
+                        </label>
+                        <input type="range" class="slider" id="scale" min="10" max="200" value="100">
+                    </div>
+                </section>
+
+                <!-- Background -->
+                <section class="section">
+                    <div class="attr-header">
+                        <h3 class="section-title resetable" data-reset="bg">FUNDO</h3>
+                    </div>
+
+                    <div class="color-gradient-container compact">
+                        <div class="color-stops" id="bgColorStops"></div>
+                        <div class="gradient-bar" id="bgGradientBar"></div>
+                        <button class="add-color-btn" id="addBgColorBtn">+</button>
+                    </div>
+
                     <div class="bg-gradient-dir">
-                        <button class="dir-btn active" data-dir="vertical">↓</button>
+                        <button class="dir-btn active" data-dir="solid">■</button>
+                        <button class="dir-btn" data-dir="vertical">↓</button>
                         <button class="dir-btn" data-dir="horizontal">→</button>
                         <button class="dir-btn" data-dir="radial">◎</button>
                     </div>
-                </div>
-            </section>
+                </section>
 
-            <!-- Layers -->
-            <section class="section section-layers">
-                <div class="section-header">
-                    <h3 class="section-title">LAYERS</h3>
-                    <button class="add-layer-btn" id="addLayerBtn" title="Add Layer">+</button>
-                </div>
-                <div class="layers-list" id="layersList"></div>
-            </section>
+                <!-- Layers -->
+                <section class="section section-layers">
+                    <div class="section-header">
+                        <h3 class="section-title">LAYERS</h3>
+                        <button class="add-layer-btn" id="addLayerBtn">+</button>
+                    </div>
+                    <div class="layers-list" id="layersList"></div>
+                </section>
+            </div>
         </aside>
     </div>
 
