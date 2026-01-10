@@ -8,7 +8,7 @@ const DEFAULTS = {
     spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear',
     length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear',
     opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear',
-    colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x',
+    colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x', colorFadeStart: 0, colorFadeEnd: 100, colorSteps: 100,
     rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
     bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
 };
@@ -62,8 +62,22 @@ function getValueWithFade(range, rawT, fs, fe, curve) {
     return lerp(range.start, range.end, applyCurve((rawT - fStart) / (fEnd - fStart), curve));
 }
 
-function getGradientColor(colors, t) {
+function getGradientColor(colors, rawT, fadeStart, fadeEnd, steps) {
     if (colors.length === 1) return hexToRgb(colors[0]);
+
+    // Apply fade position
+    const fs = (fadeStart ?? 0) / 100, fe = (fadeEnd ?? 100) / 100;
+    let t;
+    if (rawT <= fs) t = 0;
+    else if (rawT >= fe) t = 1;
+    else t = (rawT - fs) / (fe - fs);
+
+    // Apply steps (posterization)
+    if (steps && steps < 100) {
+        t = Math.floor(t * steps) / (steps - 1);
+        t = Math.min(1, t);
+    }
+
     const seg = (colors.length - 1) * t;
     const i = Math.floor(seg);
     return lerpColor3(hexToRgb(colors[Math.min(i, colors.length - 1)]), hexToRgb(colors[Math.min(i + 1, colors.length - 1)]), seg - i);
@@ -87,6 +101,9 @@ function createLayerFromState() {
     layer.colors = [...state.colors];
     layer.colorMode = state.colorMode;
     layer.colorAxis = state.colorAxis;
+    layer.colorFadeStart = state.colorFadeStart;
+    layer.colorFadeEnd = state.colorFadeEnd;
+    layer.colorSteps = state.colorSteps;
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
     return layer;
 }
@@ -133,6 +150,9 @@ function loadLayerToState(layer) {
     state.colors = [...layer.colors];
     state.colorMode = layer.colorMode;
     state.colorAxis = layer.colorAxis;
+    state.colorFadeStart = layer.colorFadeStart ?? DEFAULTS.colorFadeStart;
+    state.colorFadeEnd = layer.colorFadeEnd ?? DEFAULTS.colorFadeEnd;
+    state.colorSteps = layer.colorSteps ?? DEFAULTS.colorSteps;
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => state[p] = layer[p]);
     syncUIWithState();
 }
@@ -151,6 +171,9 @@ function saveStateToActiveLayer() {
     layer.colors = [...state.colors];
     layer.colorMode = state.colorMode;
     layer.colorAxis = state.colorAxis;
+    layer.colorFadeStart = state.colorFadeStart;
+    layer.colorFadeEnd = state.colorFadeEnd;
+    layer.colorSteps = state.colorSteps;
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
     updateLayersUI();
 }
@@ -212,7 +235,7 @@ function drawLines(layer) {
         const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
         const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
         const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -228,7 +251,7 @@ function drawRadial(layer) {
         const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
         const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
         const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         const outerR = radius * spacingMult;
@@ -246,7 +269,7 @@ function drawCircles(layer) {
         const r = (t * 0.9 + 0.1) * maxR * spacingMult;
         const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
         const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         circle(cx, cy, r * 2);
@@ -267,7 +290,7 @@ function drawGrid(layer) {
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
             const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
-            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
+            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
             strokeWeight(max(0.5, weight));
             stroke(c.r, c.g, c.b, opacityVal / 100 * 255);
             const rw = cW * sizeMult * spacingMult, rh = cH * sizeMult * spacingMult;
@@ -289,7 +312,7 @@ function drawDots(layer) {
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
             const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
-            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
+            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
             fill(c.r, c.g, c.b, opacityVal / 100 * 255);
             circle(col * cW + cW / 2, row * cH + cH / 2, dotSize);
         }
@@ -307,7 +330,7 @@ function drawTriangle(layer) {
         const xLeft = lerp(topX, w * 0.1, progress), xRight = lerp(topX, w * 0.9, progress);
         const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
         const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         line(xLeft, y, xRight, y);
@@ -480,12 +503,26 @@ function setupColorSystem() {
     document.getElementById('addColorStop').onclick = () => { state.colors.push('#ffffff'); updateColorStops(); saveStateToActiveLayer(); };
     document.getElementById('saveColorPreset').onclick = saveColorPreset;
     setupAxisToggle('color');
+
+    // Color fade position
+    const cfs = document.getElementById('colorFadeStart'), cfe = document.getElementById('colorFadeEnd');
+    if (cfs) cfs.oninput = () => { state.colorFadeStart = parseFloat(cfs.value); saveStateToActiveLayer(); };
+    if (cfe) cfe.oninput = () => { state.colorFadeEnd = parseFloat(cfe.value); saveStateToActiveLayer(); };
+
+    // Color steps
+    const stepsSlider = document.getElementById('colorSteps'), stepsValue = document.getElementById('colorStepsValue');
+    if (stepsSlider) stepsSlider.oninput = () => {
+        state.colorSteps = parseInt(stepsSlider.value);
+        stepsValue.textContent = state.colorSteps >= 100 ? '∞' : state.colorSteps;
+        saveStateToActiveLayer();
+    };
 }
 
 function updateColorMode() {
     document.getElementById('colorModeSolid').classList.toggle('active', state.colorMode === 'solid');
     document.getElementById('colorModeFade').classList.toggle('active', state.colorMode === 'fade');
     document.getElementById('colorAxisToggle').classList.toggle('hidden', state.colorMode === 'solid');
+    document.getElementById('colorFadeControls').classList.toggle('hidden', state.colorMode === 'solid');
 }
 
 function updateColorStops() {
@@ -624,6 +661,13 @@ function syncUIWithState() {
         if (s) s.value = state[p];
         if (i) i.value = state[p];
     });
+    // Color fade sync
+    const cfs = document.getElementById('colorFadeStart'), cfe = document.getElementById('colorFadeEnd');
+    const stepsSlider = document.getElementById('colorSteps'), stepsValue = document.getElementById('colorStepsValue');
+    if (cfs) cfs.value = state.colorFadeStart;
+    if (cfe) cfe.value = state.colorFadeEnd;
+    if (stepsSlider) stepsSlider.value = state.colorSteps;
+    if (stepsValue) stepsValue.textContent = state.colorSteps >= 100 ? '∞' : state.colorSteps;
     updateColorStops();
     updateColorMode();
 }
