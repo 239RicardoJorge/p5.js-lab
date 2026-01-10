@@ -1,209 +1,111 @@
 /**
  * VECTOR.LAB — 80s Pattern Generator
- * With axis effects, fade positions, and color presets
  */
 
-// =========================================
-// Default Values
-// =========================================
-
 const DEFAULTS = {
-    count: 20,
-
-    weight: { start: 2, end: 2 },
-    weightAxis: 'x',
-    weightFadeStart: 0,
-    weightFadeEnd: 100,
-    weightCurve: 'linear',
-
-    spacing: { start: 1, end: 1 },
-    spacingAxis: 'x',
-    spacingFadeStart: 0,
-    spacingFadeEnd: 100,
-    spacingCurve: 'linear',
-
-    length: { start: 100, end: 100 },
-    lengthAxis: 'x',
-    lengthFadeStart: 0,
-    lengthFadeEnd: 100,
-    lengthCurve: 'linear',
-
-    opacity: { start: 100, end: 100 },
-    opacityAxis: 'x',
-    opacityFadeStart: 0,
-    opacityFadeEnd: 100,
-    opacityCurve: 'linear',
-
-    colors: ['#ffffff'],
-    colorAxis: 'x',
-
-    rotX: 0, rotY: 0, rotZ: 0,
-    posX: 50, posY: 50, scale: 100,
-
-    bgColors: ['#000000'],
-    bgDir: 'solid'
+    count: 20, countRate: 0, countRateCurve: 'sine',
+    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear', weightRate: 0, weightRateCurve: 'sine',
+    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingRate: 0, spacingRateCurve: 'sine',
+    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear', lengthRate: 0, lengthRateCurve: 'sine',
+    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear', opacityRate: 0, opacityRateCurve: 'sine',
+    colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x',
+    rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
+    bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
 };
 
-// =========================================
-// State
-// =========================================
+const defaultColorPresets = [
+    { colors: ['#ffffff'], name: 'White' },
+    { colors: ['#ff6b35', '#ff3366'], name: 'Sunset' },
+    { colors: ['#ff3366', '#00d4ff'], name: 'Neon' },
+    { colors: ['#00d4ff', '#ffffff'], name: 'Ice' },
+    { colors: ['#ffcc00', '#ff6b35', '#ff3366'], name: 'Fire' },
+    { colors: ['#00ff88', '#00d4ff', '#8855ff'], name: 'Aurora' }
+];
+
+const defaultBgPresets = [
+    { colors: ['#000000'], dir: 'solid', name: 'Black' },
+    { colors: ['#ffffff'], dir: 'solid', name: 'White' },
+    { colors: ['#0a0a1a', '#1a1a3e'], dir: 'vertical', name: 'Night' },
+    { colors: ['#1a0a2a', '#0a1a2a'], dir: 'horizontal', name: 'Deep' }
+];
 
 const state = {
-    canvas: null,
-    canvasWidth: 800,
-    canvasHeight: 800,
-
+    canvas: null, canvasWidth: 800, canvasHeight: 800, time: 0,
     pattern: 'lines',
-
-    count: DEFAULTS.count,
-
-    weight: { ...DEFAULTS.weight },
-    weightAxis: DEFAULTS.weightAxis,
-    weightFadeStart: DEFAULTS.weightFadeStart,
-    weightFadeEnd: DEFAULTS.weightFadeEnd,
-    weightCurve: DEFAULTS.weightCurve,
-
-    spacing: { ...DEFAULTS.spacing },
-    spacingAxis: DEFAULTS.spacingAxis,
-    spacingFadeStart: DEFAULTS.spacingFadeStart,
-    spacingFadeEnd: DEFAULTS.spacingFadeEnd,
-    spacingCurve: DEFAULTS.spacingCurve,
-
-    length: { ...DEFAULTS.length },
-    lengthAxis: DEFAULTS.lengthAxis,
-    lengthFadeStart: DEFAULTS.lengthFadeStart,
-    lengthFadeEnd: DEFAULTS.lengthFadeEnd,
-    lengthCurve: DEFAULTS.lengthCurve,
-
-    opacity: { ...DEFAULTS.opacity },
-    opacityAxis: DEFAULTS.opacityAxis,
-    opacityFadeStart: DEFAULTS.opacityFadeStart,
-    opacityFadeEnd: DEFAULTS.opacityFadeEnd,
-    opacityCurve: DEFAULTS.opacityCurve,
-
-    colors: [...DEFAULTS.colors],
-    colorAxis: DEFAULTS.colorAxis,
-
-    rotX: DEFAULTS.rotX,
-    rotY: DEFAULTS.rotY,
-    rotZ: DEFAULTS.rotZ,
-    posX: DEFAULTS.posX,
-    posY: DEFAULTS.posY,
-    scale: DEFAULTS.scale,
-
-    bgColors: [...DEFAULTS.bgColors],
-    bgDir: DEFAULTS.bgDir,
-
-    layers: [],
-    activeLayerId: null,
-    draggedLayerId: null
+    ...JSON.parse(JSON.stringify(DEFAULTS)),
+    colorPresets: [...defaultColorPresets],
+    bgPresets: [...defaultBgPresets],
+    layers: [], activeLayerId: null, draggedLayerId: null
 };
 
-// =========================================
-// Utility Functions
-// =========================================
-
+// Utilities
 function hexToRgb(hex) {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-    } : { r: 255, g: 255, b: 255 };
+    const r = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return r ? { r: parseInt(r[1], 16), g: parseInt(r[2], 16), b: parseInt(r[3], 16) } : { r: 255, g: 255, b: 255 };
 }
 
 function lerpColor3(c1, c2, t) {
-    return {
-        r: Math.round(c1.r + (c2.r - c1.r) * t),
-        g: Math.round(c1.g + (c2.g - c1.g) * t),
-        b: Math.round(c1.b + (c2.b - c1.b) * t)
-    };
+    return { r: Math.round(c1.r + (c2.r - c1.r) * t), g: Math.round(c1.g + (c2.g - c1.g) * t), b: Math.round(c1.b + (c2.b - c1.b) * t) };
 }
 
-function applyCurve(t, curveType) {
-    switch (curveType) {
-        case 'easeIn': return t * t;
-        case 'easeOut': return 1 - (1 - t) * (1 - t);
-        case 'easeInOut': return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-        default: return t;
+function applyCurve(t, type) {
+    if (type === 'easeIn') return t * t;
+    if (type === 'easeOut') return 1 - (1 - t) * (1 - t);
+    if (type === 'easeInOut') return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+    return t;
+}
+
+function getWaveValue(type, phase) {
+    const p = phase % 1;
+    if (type === 'sine') return (Math.sin(p * TWO_PI) + 1) / 2;
+    if (type === 'triangle') return p < 0.5 ? p * 2 : 2 - p * 2;
+    if (type === 'square') return p < 0.5 ? 1 : 0;
+    if (type === 'saw') return p;
+    return 0;
+}
+
+function getValueWithFade(range, rawT, fs, fe, curve, rate, rateCurve) {
+    let baseStart = range.start, baseEnd = range.end;
+    if (rate > 0) {
+        const wave = getWaveValue(rateCurve, state.time * rate);
+        const mid = (range.start + range.end) / 2;
+        const amp = Math.abs(range.end - range.start) / 2 || mid * 0.5;
+        baseStart = mid + amp * (wave - 0.5);
+        baseEnd = mid - amp * (wave - 0.5);
     }
-}
-
-// Get value with fade: before fadeStart = min, after fadeEnd = max, between = interpolate
-function getValueWithFade(range, rawT, fadeStart, fadeEnd, curve) {
-    const fs = fadeStart / 100;
-    const fe = fadeEnd / 100;
-
-    if (rawT <= fs) return range.start;
-    if (rawT >= fe) return range.end;
-
-    const t = (rawT - fs) / (fe - fs);
-    const curved = applyCurve(t, curve);
-    return lerp(range.start, range.end, curved);
+    const fStart = fs / 100, fEnd = fe / 100;
+    if (rawT <= fStart) return baseStart;
+    if (rawT >= fEnd) return baseEnd;
+    return lerp(baseStart, baseEnd, applyCurve((rawT - fStart) / (fEnd - fStart), curve));
 }
 
 function getGradientColor(colors, t) {
     if (colors.length === 1) return hexToRgb(colors[0]);
-
-    const segment = (colors.length - 1) * t;
-    const index = Math.floor(segment);
-    const localT = segment - index;
-
-    const i1 = Math.min(index, colors.length - 1);
-    const i2 = Math.min(index + 1, colors.length - 1);
-
-    return lerpColor3(hexToRgb(colors[i1]), hexToRgb(colors[i2]), localT);
+    const seg = (colors.length - 1) * t;
+    const i = Math.floor(seg);
+    return lerpColor3(hexToRgb(colors[Math.min(i, colors.length - 1)]), hexToRgb(colors[Math.min(i + 1, colors.length - 1)]), seg - i);
 }
 
-function getAxisProgress(col, row, countX, countY, axis) {
-    const tx = countX > 1 ? col / (countX - 1) : 0.5;
-    const ty = countY > 1 ? row / (countY - 1) : 0.5;
-
-    if (axis === 'x') return tx;
-    if (axis === 'y') return ty;
-    return (tx + ty) / 2; // XY diagonal
+function getAxisProgress(col, row, cX, cY, axis) {
+    const tx = cX > 1 ? col / (cX - 1) : 0.5, ty = cY > 1 ? row / (cY - 1) : 0.5;
+    return axis === 'x' ? tx : axis === 'y' ? ty : (tx + ty) / 2;
 }
 
-// =========================================
 // Layer System
-// =========================================
-
 function createLayerFromState() {
-    return {
-        id: Date.now(),
-        name: `Layer ${state.layers.length + 1}`,
-        visible: true,
-        pattern: state.pattern,
-        count: state.count,
-        weight: { ...state.weight },
-        weightAxis: state.weightAxis,
-        weightFadeStart: state.weightFadeStart,
-        weightFadeEnd: state.weightFadeEnd,
-        weightCurve: state.weightCurve,
-        spacing: { ...state.spacing },
-        spacingAxis: state.spacingAxis,
-        spacingFadeStart: state.spacingFadeStart,
-        spacingFadeEnd: state.spacingFadeEnd,
-        spacingCurve: state.spacingCurve,
-        length: { ...state.length },
-        lengthAxis: state.lengthAxis,
-        lengthFadeStart: state.lengthFadeStart,
-        lengthFadeEnd: state.lengthFadeEnd,
-        lengthCurve: state.lengthCurve,
-        opacity: { ...state.opacity },
-        opacityAxis: state.opacityAxis,
-        opacityFadeStart: state.opacityFadeStart,
-        opacityFadeEnd: state.opacityFadeEnd,
-        opacityCurve: state.opacityCurve,
-        colors: [...state.colors],
-        colorAxis: state.colorAxis,
-        rotX: state.rotX,
-        rotY: state.rotY,
-        rotZ: state.rotZ,
-        posX: state.posX,
-        posY: state.posY,
-        scale: state.scale
-    };
+    const layer = { id: Date.now(), name: `Layer ${state.layers.length + 1}`, visible: true, pattern: state.pattern };
+    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
+        if (typeof state[p] === 'object') layer[p] = { ...state[p] };
+        else layer[p] = state[p];
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+            if (state[p + s] !== undefined) layer[p + s] = state[p + s];
+        });
+    });
+    layer.colors = [...state.colors];
+    layer.colorMode = state.colorMode;
+    layer.colorAxis = state.colorAxis;
+    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
+    return layer;
 }
 
 function createLayer() {
@@ -216,9 +118,9 @@ function createLayer() {
 
 function deleteLayer(id) {
     if (state.layers.length <= 1) return;
-    const index = state.layers.findIndex(l => l.id === id);
-    if (index !== -1) {
-        state.layers.splice(index, 1);
+    const i = state.layers.findIndex(l => l.id === id);
+    if (i !== -1) {
+        state.layers.splice(i, 1);
         if (state.activeLayerId === id) {
             state.activeLayerId = state.layers[state.layers.length - 1].id;
             loadLayerToState(getActiveLayer());
@@ -227,9 +129,7 @@ function deleteLayer(id) {
     }
 }
 
-function getActiveLayer() {
-    return state.layers.find(l => l.id === state.activeLayerId);
-}
+function getActiveLayer() { return state.layers.find(l => l.id === state.activeLayerId); }
 
 function selectLayer(id) {
     state.activeLayerId = id;
@@ -239,162 +139,65 @@ function selectLayer(id) {
 
 function loadLayerToState(layer) {
     if (!layer) return;
-
     state.pattern = layer.pattern;
-    state.count = layer.count;
-
-    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
-        state[param] = { ...layer[param] };
-        state[`${param}Axis`] = layer[`${param}Axis`];
-        state[`${param}FadeStart`] = layer[`${param}FadeStart`];
-        state[`${param}FadeEnd`] = layer[`${param}FadeEnd`];
-        state[`${param}Curve`] = layer[`${param}Curve`];
+    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
+        if (typeof layer[p] === 'object') state[p] = { ...layer[p] };
+        else state[p] = layer[p];
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+            if (layer[p + s] !== undefined) state[p + s] = layer[p + s];
+        });
     });
-
     state.colors = [...layer.colors];
+    state.colorMode = layer.colorMode;
     state.colorAxis = layer.colorAxis;
-    state.rotX = layer.rotX;
-    state.rotY = layer.rotY;
-    state.rotZ = layer.rotZ;
-    state.posX = layer.posX;
-    state.posY = layer.posY;
-    state.scale = layer.scale;
-
+    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => state[p] = layer[p]);
     syncUIWithState();
 }
 
 function saveStateToActiveLayer() {
     const layer = getActiveLayer();
     if (!layer) return;
-
     layer.pattern = state.pattern;
-    layer.count = state.count;
-
-    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
-        layer[param] = { ...state[param] };
-        layer[`${param}Axis`] = state[`${param}Axis`];
-        layer[`${param}FadeStart`] = state[`${param}FadeStart`];
-        layer[`${param}FadeEnd`] = state[`${param}FadeEnd`];
-        layer[`${param}Curve`] = state[`${param}Curve`];
+    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
+        if (typeof state[p] === 'object') layer[p] = { ...state[p] };
+        else layer[p] = state[p];
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Rate', 'RateCurve'].forEach(s => {
+            if (state[p + s] !== undefined) layer[p + s] = state[p + s];
+        });
     });
-
     layer.colors = [...state.colors];
+    layer.colorMode = state.colorMode;
     layer.colorAxis = state.colorAxis;
-    layer.rotX = state.rotX;
-    layer.rotY = state.rotY;
-    layer.rotZ = state.rotZ;
-    layer.posX = state.posX;
-    layer.posY = state.posY;
-    layer.scale = state.scale;
-
-    updateLayersUI();
-}
-
-function moveLayer(fromIndex, toIndex) {
-    const layer = state.layers.splice(fromIndex, 1)[0];
-    state.layers.splice(toIndex, 0, layer);
+    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => layer[p] = state[p]);
     updateLayersUI();
 }
 
 function updateLayersUI() {
     const list = document.getElementById('layersList');
     if (!list) return;
-
     list.innerHTML = '';
-
-    [...state.layers].reverse().forEach((layer) => {
+    [...state.layers].reverse().forEach(layer => {
         const item = document.createElement('div');
         item.className = `layer-item${layer.id === state.activeLayerId ? ' active' : ''}`;
         item.draggable = true;
-        item.dataset.id = layer.id;
-
-        item.innerHTML = `
-            <div class="layer-visibility ${layer.visible ? 'visible' : ''}" data-id="${layer.id}">
-                ${layer.visible ? '◉' : '○'}
-            </div>
-            <div class="layer-info">
-                <div class="layer-name">${layer.name}</div>
-                <div class="layer-pattern">${layer.pattern}</div>
-            </div>
-            <button class="layer-delete" data-id="${layer.id}">×</button>
-        `;
-
-        item.addEventListener('click', (e) => {
-            if (!e.target.closest('.layer-visibility') && !e.target.closest('.layer-delete')) {
-                selectLayer(layer.id);
-            }
-        });
-
-        item.querySelector('.layer-visibility').addEventListener('click', (e) => {
-            e.stopPropagation();
-            layer.visible = !layer.visible;
-            updateLayersUI();
-        });
-
-        item.querySelector('.layer-delete').addEventListener('click', (e) => {
-            e.stopPropagation();
-            deleteLayer(layer.id);
-        });
-
-        item.addEventListener('dragstart', () => {
-            state.draggedLayerId = layer.id;
-            item.classList.add('dragging');
-        });
-
-        item.addEventListener('dragend', () => {
-            item.classList.remove('dragging');
-            state.draggedLayerId = null;
-            document.querySelectorAll('.layer-item').forEach(el => el.classList.remove('drag-over'));
-        });
-
-        item.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            if (layer.id !== state.draggedLayerId) item.classList.add('drag-over');
-        });
-
-        item.addEventListener('dragleave', () => item.classList.remove('drag-over'));
-
-        item.addEventListener('drop', (e) => {
-            e.preventDefault();
-            item.classList.remove('drag-over');
-            if (state.draggedLayerId && layer.id !== state.draggedLayerId) {
-                const fromIndex = state.layers.findIndex(l => l.id === state.draggedLayerId);
-                const toIndex = state.layers.findIndex(l => l.id === layer.id);
-                if (fromIndex !== -1 && toIndex !== -1) moveLayer(fromIndex, toIndex);
-            }
-        });
-
+        item.innerHTML = `<div class="layer-visibility ${layer.visible ? 'visible' : ''}">${layer.visible ? '◉' : '○'}</div><div class="layer-info"><div class="layer-name">${layer.name}</div><div class="layer-pattern">${layer.pattern}</div></div><button class="layer-delete">×</button>`;
+        item.addEventListener('click', e => { if (!e.target.closest('.layer-visibility, .layer-delete')) selectLayer(layer.id); });
+        item.querySelector('.layer-visibility').onclick = e => { e.stopPropagation(); layer.visible = !layer.visible; updateLayersUI(); };
+        item.querySelector('.layer-delete').onclick = e => { e.stopPropagation(); deleteLayer(layer.id); };
         list.appendChild(item);
     });
 }
 
-// =========================================
 // Pattern Renderers
-// =========================================
-
 function drawLines(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const count = layer.count;
-
+    const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
     for (let i = 0; i < count; i++) {
         const tx = count > 1 ? i / (count - 1) : 0.5;
-
-        const wt = layer.weightAxis === 'x' ? tx : layer.weightAxis === 'y' ? 0.5 : tx;
-        const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
-
-        const lt = layer.lengthAxis === 'x' ? tx : layer.lengthAxis === 'y' ? 0.5 : tx;
-        const lengthPct = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
-
-        const ot = layer.opacityAxis === 'x' ? tx : layer.opacityAxis === 'y' ? 0.5 : tx;
-        const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-
-        const ct = layer.colorAxis === 'x' ? tx : layer.colorAxis === 'y' ? 0.5 : tx;
-        const col = getGradientColor(layer.colors, ct);
-
-        const x = tx * w;
-        const halfGap = (1 - lengthPct) / 2 * h;
-
+        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5);
+        const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         line(x, halfGap, x, h - halfGap);
@@ -402,48 +205,28 @@ function drawLines(layer) {
 }
 
 function drawRadial(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const cx = w / 2;
-    const cy = h / 2;
-    const count = layer.count;
-    const radius = Math.min(w, h) * 0.7;
-
+    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, radius = Math.min(w, h) * 0.7;
     for (let i = 0; i < count; i++) {
-        const t = i / count;
-        const angle = t * TWO_PI;
-
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
-        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = getGradientColor(layer.colors, t);
-
+        const t = i / count, angle = t * TWO_PI;
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
-
         const innerR = radius * (1 - lengthPct);
         line(cx + cos(angle) * innerR, cy + sin(angle) * innerR, cx + cos(angle) * radius, cy + sin(angle) * radius);
     }
 }
 
 function drawCircles(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const cx = w / 2;
-    const cy = h / 2;
-    const count = layer.count;
-    const maxRadius = Math.min(w, h) * 0.45;
-
+    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, maxR = Math.min(w, h) * 0.45;
     noFill();
-
     for (let i = 0; i < count; i++) {
-        const t = count > 1 ? i / (count - 1) : 0.5;
-        const r = (t * 0.9 + 0.1) * maxRadius;
-
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = getGradientColor(layer.colors, t);
-
+        const t = count > 1 ? i / (count - 1) : 0.5, r = (t * 0.9 + 0.1) * maxR;
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         circle(cx, cy, r * 2);
@@ -451,86 +234,53 @@ function drawCircles(layer) {
 }
 
 function drawGrid(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const gridSize = Math.max(2, Math.round(sqrt(layer.count)));
-    const cellW = w / gridSize;
-    const cellH = h / gridSize;
-
+    const w = state.canvasWidth, h = state.canvasHeight, gs = Math.max(2, Math.round(sqrt(layer.count))), cW = w / gs, cH = h / gs;
     noFill();
-
-    for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-            const wt = getAxisProgress(col, row, gridSize, gridSize, layer.weightAxis);
-            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
-
-            const lt = getAxisProgress(col, row, gridSize, gridSize, layer.lengthAxis);
-            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
-
-            const ot = getAxisProgress(col, row, gridSize, gridSize, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-
-            const ct = getAxisProgress(col, row, gridSize, gridSize, layer.colorAxis);
-            const c = getGradientColor(layer.colors, ct);
-
+    for (let row = 0; row < gs; row++) {
+        for (let col = 0; col < gs; col++) {
+            const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
+            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+            const lt = getAxisProgress(col, row, gs, gs, layer.lengthAxis);
+            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthRate, layer.lengthRateCurve) / 100;
+            const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+            const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
+            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
             strokeWeight(max(0.5, weight));
             stroke(c.r, c.g, c.b, opacityVal / 100 * 255);
-
-            const x = col * cellW;
-            const y = row * cellH;
-            const rw = cellW * sizeMult;
-            const rh = cellH * sizeMult;
-
-            rect(x + (cellW - rw) / 2, y + (cellH - rh) / 2, rw, rh);
+            const x = col * cW, y = row * cH, rw = cW * sizeMult, rh = cH * sizeMult;
+            rect(x + (cW - rw) / 2, y + (cH - rh) / 2, rw, rh);
         }
     }
 }
 
 function drawDots(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const gridSize = Math.max(2, Math.round(sqrt(layer.count)));
-    const cellW = w / gridSize;
-    const cellH = h / gridSize;
-
+    const w = state.canvasWidth, h = state.canvasHeight, gs = Math.max(2, Math.round(sqrt(layer.count))), cW = w / gs, cH = h / gs;
     noStroke();
-
-    for (let row = 0; row < gridSize; row++) {
-        for (let col = 0; col < gridSize; col++) {
-            const wt = getAxisProgress(col, row, gridSize, gridSize, layer.weightAxis);
-            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve) * 2;
-
-            const ot = getAxisProgress(col, row, gridSize, gridSize, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-
-            const ct = getAxisProgress(col, row, gridSize, gridSize, layer.colorAxis);
-            const c = getGradientColor(layer.colors, ct);
-
+    for (let row = 0; row < gs; row++) {
+        for (let col = 0; col < gs; col++) {
+            const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
+            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve) * 2;
+            const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+            const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
+            const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct);
             fill(c.r, c.g, c.b, opacityVal / 100 * 255);
-            circle(col * cellW + cellW / 2, row * cellH + cellH / 2, dotSize);
+            circle(col * cW + cW / 2, row * cH + cH / 2, dotSize);
         }
     }
 }
 
 function drawTriangle(layer) {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const count = layer.count;
-
-    const topX = w / 2, topY = h * 0.1;
-    const leftY = h * 0.9;
-
+    const w = state.canvasWidth, h = state.canvasHeight, count = layer.count;
+    const topX = w / 2, topY = h * 0.1, leftY = h * 0.9;
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
-        const y = lerp(topY, leftY, t);
-        const progress = (y - topY) / (leftY - topY);
-        const xLeft = lerp(topX, w * 0.1, progress);
-        const xRight = lerp(topX, w * 0.9, progress);
-
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
-        const col = getGradientColor(layer.colors, t);
-
+        const y = lerp(topY, leftY, t), progress = (y - topY) / (leftY - topY);
+        const xLeft = lerp(topX, w * 0.1, progress), xRight = lerp(topX, w * 0.9, progress);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightRate, layer.weightRateCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacityRate, layer.opacityRateCurve);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
         line(xLeft, y, xRight, y);
@@ -539,12 +289,7 @@ function drawTriangle(layer) {
 
 function renderLayer(layer) {
     push();
-
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const cx = w / 2;
-    const cy = h / 2;
-
+    const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2;
     translate(cx, cy);
     rotate(radians(layer.rotZ));
     scale(1, cos(radians(layer.rotX)));
@@ -552,88 +297,48 @@ function renderLayer(layer) {
     translate((layer.posX - 50) * w / 100, (layer.posY - 50) * h / 100);
     scale(layer.scale / 100);
     translate(-cx, -cy);
-
-    switch (layer.pattern) {
-        case 'lines': drawLines(layer); break;
-        case 'radial': drawRadial(layer); break;
-        case 'circles': drawCircles(layer); break;
-        case 'grid': drawGrid(layer); break;
-        case 'dots': drawDots(layer); break;
-        case 'triangle': drawTriangle(layer); break;
-    }
-
+    const renderers = { lines: drawLines, radial: drawRadial, circles: drawCircles, grid: drawGrid, dots: drawDots, triangle: drawTriangle };
+    if (renderers[layer.pattern]) renderers[layer.pattern](layer);
     pop();
 }
 
-// =========================================
-// Background
-// =========================================
-
 function drawBackground() {
-    const w = state.canvasWidth;
-    const h = state.canvasHeight;
-    const colors = state.bgColors;
-
-    if (state.bgDir === 'solid' || colors.length === 1) {
+    const w = state.canvasWidth, h = state.canvasHeight, colors = state.bgColors;
+    if (state.bgMode === 'solid' || colors.length === 1) {
         const c = hexToRgb(colors[0]);
         background(c.r, c.g, c.b);
     } else if (state.bgDir === 'vertical') {
-        for (let y = 0; y < h; y++) {
-            const c = getGradientColor(colors, y / h);
-            stroke(c.r, c.g, c.b);
-            line(0, y, w, y);
-        }
+        for (let y = 0; y < h; y++) { const c = getGradientColor(colors, y / h); stroke(c.r, c.g, c.b); line(0, y, w, y); }
     } else if (state.bgDir === 'horizontal') {
-        for (let x = 0; x < w; x++) {
-            const c = getGradientColor(colors, x / w);
-            stroke(c.r, c.g, c.b);
-            line(x, 0, x, h);
-        }
+        for (let x = 0; x < w; x++) { const c = getGradientColor(colors, x / w); stroke(c.r, c.g, c.b); line(x, 0, x, h); }
     } else if (state.bgDir === 'radial') {
-        const maxR = Math.max(w, h) * 0.7;
-        const cx = w / 2;
-        const cy = h / 2;
+        const maxR = Math.max(w, h) * 0.7, cx = w / 2, cy = h / 2;
         noStroke();
-        for (let r = maxR; r > 0; r -= 2) {
-            const c = getGradientColor(colors, 1 - r / maxR);
-            fill(c.r, c.g, c.b);
-            circle(cx, cy, r * 2);
-        }
+        for (let r = maxR; r > 0; r -= 2) { const c = getGradientColor(colors, 1 - r / maxR); fill(c.r, c.g, c.b); circle(cx, cy, r * 2); }
     }
 }
 
-// =========================================
 // p5.js
-// =========================================
-
 function setup() {
     state.canvas = createCanvas(state.canvasWidth, state.canvasHeight);
     state.canvas.parent('canvas');
     pixelDensity(2);
     frameRate(60);
-
     document.getElementById('resWidth').value = state.canvasWidth;
     document.getElementById('resHeight').value = state.canvasHeight;
-
     createLayer();
     initUI();
-
-    console.log('VECTOR.LAB initialized');
 }
 
 function draw() {
+    state.time += deltaTime * 0.001;
     drawBackground();
-    state.layers.forEach(layer => {
-        if (layer.visible) renderLayer(layer);
-    });
+    state.layers.forEach(layer => { if (layer.visible) renderLayer(layer); });
 }
 
-// =========================================
-// UI
-// =========================================
-
+// UI Init
 function initUI() {
-    // Pattern presets
+    // Patterns
     document.querySelectorAll('.preset-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
@@ -645,192 +350,240 @@ function initUI() {
 
     // Count
     setupSingleControl('count', 'countValue', 'countSlider');
+    setupRatePanel('count');
 
     // Range controls
     ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
         setupRangeControl(param);
         setupAxisToggle(param);
         setupFadePosition(param);
+        setupRatePanel(param);
     });
 
-    // Color axis toggle
-    setupAxisToggle('color');
+    // Colors
+    setupColorSystem();
+    setupBgSystem();
 
-    // Color presets
-    document.querySelectorAll('#colorPresets .color-preset').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#colorPresets .color-preset').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state.colors = btn.dataset.colors.split(',');
-            saveStateToActiveLayer();
-        });
-    });
-
-    // Transform controls
+    // Transform
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(param => {
         const slider = document.getElementById(param);
         const input = document.getElementById(`${param}Value`);
-
         if (slider && input) {
-            slider.addEventListener('input', () => {
-                state[param] = parseFloat(slider.value);
-                input.value = slider.value;
-                saveStateToActiveLayer();
-            });
-            input.addEventListener('input', () => {
-                state[param] = parseFloat(input.value) || 0;
-                slider.value = state[param];
-                saveStateToActiveLayer();
-            });
+            slider.oninput = () => { state[param] = parseFloat(slider.value); input.value = slider.value; saveStateToActiveLayer(); };
+            input.oninput = () => { state[param] = parseFloat(input.value) || 0; slider.value = state[param]; saveStateToActiveLayer(); };
         }
     });
 
-    // Background presets
-    document.querySelectorAll('#bgPresets .bg-preset').forEach(btn => {
-        btn.addEventListener('click', () => {
-            document.querySelectorAll('#bgPresets .bg-preset').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            state.bgColors = btn.dataset.colors.split(',');
-            state.bgDir = btn.dataset.dir;
-        });
-    });
-
     // Resolution
-    document.getElementById('resApply').addEventListener('click', applyResolution);
-    document.getElementById('resWidth').addEventListener('keydown', e => { if (e.key === 'Enter') applyResolution(); });
-    document.getElementById('resHeight').addEventListener('keydown', e => { if (e.key === 'Enter') applyResolution(); });
+    document.getElementById('resApply').onclick = applyResolution;
 
-    // Double-click reset
-    document.querySelectorAll('.resetable').forEach(el => {
-        el.addEventListener('dblclick', () => resetAttribute(el.dataset.reset));
-    });
+    // Resets
+    document.querySelectorAll('.resetable').forEach(el => el.addEventListener('dblclick', () => resetAttribute(el.dataset.reset)));
 
     // Layers
-    document.getElementById('addLayerBtn').addEventListener('click', createLayer);
+    document.getElementById('addLayerBtn').onclick = createLayer;
 
     // Toolbar
-    document.getElementById('resetBtn').addEventListener('click', resetAll);
-    document.getElementById('randomBtn').addEventListener('click', randomize);
-    document.getElementById('exportPng').addEventListener('click', () => saveCanvas('vector-lab-' + Date.now(), 'png'));
-    document.getElementById('saveJson').addEventListener('click', saveProject);
-    document.getElementById('loadJson').addEventListener('change', loadProject);
+    document.getElementById('resetBtn').onclick = resetAll;
+    document.getElementById('randomBtn').onclick = randomize;
+    document.getElementById('exportPng').onclick = () => saveCanvas('vector-lab-' + Date.now(), 'png');
+    document.getElementById('saveJson').onclick = saveProject;
+    document.getElementById('loadJson').onchange = loadProject;
 
     // Keyboard
-    document.addEventListener('keydown', e => {
+    document.onkeydown = e => {
         if (e.target.matches('input, select')) return;
         if (e.code === 'Space') { e.preventDefault(); randomize(); }
         if (e.code === 'KeyR') resetAll();
-    });
+    };
+
+    updateColorStops();
+    updateBgStops();
+    renderColorPresets();
+    renderBgPresets();
 }
 
 function setupSingleControl(param, inputId, sliderId) {
-    const input = document.getElementById(inputId);
-    const slider = document.getElementById(sliderId);
-
-    input.addEventListener('input', () => {
-        slider.value = input.value;
-        state[param] = parseFloat(input.value);
-        saveStateToActiveLayer();
-    });
-
-    slider.addEventListener('input', () => {
-        input.value = slider.value;
-        state[param] = parseFloat(slider.value);
-        saveStateToActiveLayer();
-    });
+    const input = document.getElementById(inputId), slider = document.getElementById(sliderId);
+    input.oninput = () => { slider.value = input.value; state[param] = parseFloat(input.value); saveStateToActiveLayer(); };
+    slider.oninput = () => { input.value = slider.value; state[param] = parseFloat(slider.value); saveStateToActiveLayer(); };
 }
 
 function setupRangeControl(param) {
-    const startInput = document.getElementById(`${param}Start`);
-    const endInput = document.getElementById(`${param}End`);
-    const startSlider = document.getElementById(`${param}SliderStart`);
-    const endSlider = document.getElementById(`${param}SliderEnd`);
-    const rangeEl = document.getElementById(`${param}Range`);
-
+    const sI = document.getElementById(`${param}Start`), eI = document.getElementById(`${param}End`);
+    const sS = document.getElementById(`${param}SliderStart`), eS = document.getElementById(`${param}SliderEnd`);
+    const range = document.getElementById(`${param}Range`);
     function update() {
-        const min = parseFloat(startSlider.min);
-        const max = parseFloat(startSlider.max);
-        const startVal = parseFloat(startSlider.value);
-        const endVal = parseFloat(endSlider.value);
-
-        const startPct = ((startVal - min) / (max - min)) * 100;
-        const endPct = ((endVal - min) / (max - min)) * 100;
-
-        rangeEl.style.left = `${Math.min(startPct, endPct)}%`;
-        rangeEl.style.right = `${100 - Math.max(startPct, endPct)}%`;
-
-        state[param] = { start: startVal, end: endVal };
+        const min = parseFloat(sS.min), max = parseFloat(sS.max);
+        const startPct = ((parseFloat(sS.value) - min) / (max - min)) * 100;
+        const endPct = ((parseFloat(eS.value) - min) / (max - min)) * 100;
+        range.style.left = `${Math.min(startPct, endPct)}%`;
+        range.style.right = `${100 - Math.max(startPct, endPct)}%`;
+        state[param] = { start: parseFloat(sS.value), end: parseFloat(eS.value) };
         saveStateToActiveLayer();
     }
-
-    startInput.addEventListener('input', () => { startSlider.value = startInput.value; update(); });
-    endInput.addEventListener('input', () => { endSlider.value = endInput.value; update(); });
-    startSlider.addEventListener('input', () => { startInput.value = startSlider.value; update(); });
-    endSlider.addEventListener('input', () => { endInput.value = endSlider.value; update(); });
-
+    sI.oninput = () => { sS.value = sI.value; update(); };
+    eI.oninput = () => { eS.value = eI.value; update(); };
+    sS.oninput = () => { sI.value = sS.value; update(); };
+    eS.oninput = () => { eI.value = eS.value; update(); };
     update();
 }
 
 function setupAxisToggle(param) {
     const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
     if (!toggle) return;
-
-    const buttons = toggle.querySelectorAll('.axis-btn');
-    buttons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const clickedAxis = btn.dataset.axis;
-            const currentAxis = state[`${param}Axis`];
-
-            // If clicking already active one, try to enable both (XY)
-            if (btn.classList.contains('active')) {
-                // Count active buttons
-                const activeCount = toggle.querySelectorAll('.axis-btn.active').length;
-                if (activeCount === 1) {
-                    // Add the other
-                    state[`${param}Axis`] = 'xy';
-                    buttons.forEach(b => b.classList.add('active'));
-                } else {
-                    // Deselect this one
-                    btn.classList.remove('active');
-                    state[`${param}Axis`] = clickedAxis === 'x' ? 'y' : 'x';
-                }
-            } else {
-                // Activate this one
-                buttons.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                state[`${param}Axis`] = clickedAxis;
-            }
-
+    toggle.querySelectorAll('.axis-btn').forEach(btn => {
+        btn.onclick = () => {
+            toggle.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state[`${param}Axis`] = btn.dataset.axis;
             saveStateToActiveLayer();
-        });
+        };
     });
 }
 
 function setupFadePosition(param) {
-    const fadeStart = document.getElementById(`${param}FadeStart`);
-    const fadeEnd = document.getElementById(`${param}FadeEnd`);
-    const curve = document.getElementById(`${param}Curve`);
+    const fs = document.getElementById(`${param}FadeStart`), fe = document.getElementById(`${param}FadeEnd`), curve = document.getElementById(`${param}Curve`);
+    if (fs) fs.oninput = () => { state[`${param}FadeStart`] = parseFloat(fs.value); saveStateToActiveLayer(); };
+    if (fe) fe.oninput = () => { state[`${param}FadeEnd`] = parseFloat(fe.value); saveStateToActiveLayer(); };
+    if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
+}
 
-    if (fadeStart) {
-        fadeStart.addEventListener('input', () => {
-            state[`${param}FadeStart`] = parseFloat(fadeStart.value);
-            saveStateToActiveLayer();
-        });
+function setupRatePanel(param) {
+    const btn = document.querySelector(`.rate-btn[data-param="${param}"]`);
+    const panel = document.getElementById(`${param}RatePanel`);
+    const rateInput = document.getElementById(`${param}Rate`);
+    const rateCurve = document.getElementById(`${param}RateCurve`);
+    if (btn && panel) {
+        btn.onclick = () => { btn.classList.toggle('active'); panel.classList.toggle('hidden'); };
     }
+    if (rateInput) rateInput.oninput = () => { state[`${param}Rate`] = parseFloat(rateInput.value); saveStateToActiveLayer(); };
+    if (rateCurve) rateCurve.onchange = () => { state[`${param}RateCurve`] = rateCurve.value; saveStateToActiveLayer(); };
+}
 
-    if (fadeEnd) {
-        fadeEnd.addEventListener('input', () => {
-            state[`${param}FadeEnd`] = parseFloat(fadeEnd.value);
-            saveStateToActiveLayer();
-        });
-    }
+// Color System
+function setupColorSystem() {
+    document.getElementById('colorModeSolid').onclick = () => { state.colorMode = 'solid'; updateColorMode(); saveStateToActiveLayer(); };
+    document.getElementById('colorModeFade').onclick = () => { state.colorMode = 'fade'; updateColorMode(); saveStateToActiveLayer(); };
+    document.getElementById('addColorStop').onclick = () => { state.colors.push('#ffffff'); updateColorStops(); saveStateToActiveLayer(); };
+    document.getElementById('saveColorPreset').onclick = saveColorPreset;
+    setupAxisToggle('color');
+}
 
-    if (curve) {
-        curve.addEventListener('change', () => {
-            state[`${param}Curve`] = curve.value;
-            saveStateToActiveLayer();
-        });
-    }
+function updateColorMode() {
+    document.getElementById('colorModeSolid').classList.toggle('active', state.colorMode === 'solid');
+    document.getElementById('colorModeFade').classList.toggle('active', state.colorMode === 'fade');
+    document.getElementById('colorAxisToggle').classList.toggle('hidden', state.colorMode === 'solid');
+}
+
+function updateColorStops() {
+    const container = document.getElementById('colorStops');
+    container.innerHTML = '';
+    state.colors.forEach((color, i) => {
+        const stop = document.createElement('div');
+        stop.className = 'color-stop';
+        stop.innerHTML = `<input type="color" value="${color}">${state.colors.length > 1 ? '<button class="remove-stop">×</button>' : ''}`;
+        stop.querySelector('input').oninput = e => { state.colors[i] = e.target.value; updateGradientPreview(); saveStateToActiveLayer(); };
+        const rm = stop.querySelector('.remove-stop');
+        if (rm) rm.onclick = () => { state.colors.splice(i, 1); updateColorStops(); saveStateToActiveLayer(); };
+        container.appendChild(stop);
+    });
+    updateGradientPreview();
+}
+
+function updateGradientPreview() {
+    const bar = document.getElementById('colorGradientPreview');
+    bar.style.background = state.colors.length === 1 ? state.colors[0] : `linear-gradient(90deg, ${state.colors.join(', ')})`;
+}
+
+function renderColorPresets() {
+    const container = document.getElementById('colorPresets');
+    container.innerHTML = '';
+    state.colorPresets.forEach((preset, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'color-preset';
+        btn.style.background = preset.colors.length === 1 ? preset.colors[0] : `linear-gradient(135deg, ${preset.colors.join(', ')})`;
+        btn.title = preset.name;
+        if (i >= defaultColorPresets.length) btn.innerHTML = '<button class="delete-preset">×</button>';
+        btn.onclick = e => {
+            if (e.target.classList.contains('delete-preset')) { state.colorPresets.splice(i, 1); renderColorPresets(); return; }
+            state.colors = [...preset.colors];
+            state.colorMode = preset.colors.length > 1 ? 'fade' : 'solid';
+            updateColorStops(); updateColorMode(); saveStateToActiveLayer();
+        };
+        container.appendChild(btn);
+    });
+}
+
+function saveColorPreset() {
+    state.colorPresets.push({ colors: [...state.colors], name: `Custom ${state.colorPresets.length + 1}` });
+    renderColorPresets();
+}
+
+// Background System
+function setupBgSystem() {
+    document.getElementById('bgModeSolid').onclick = () => { state.bgMode = 'solid'; updateBgMode(); };
+    document.getElementById('bgModeFade').onclick = () => { state.bgMode = 'fade'; updateBgMode(); };
+    document.getElementById('addBgStop').onclick = () => { state.bgColors.push('#333333'); updateBgStops(); };
+    document.getElementById('saveBgPreset').onclick = saveBgPreset;
+    document.querySelectorAll('.bg-direction .dir-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.bg-direction .dir-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            state.bgDir = btn.dataset.dir;
+        };
+    });
+}
+
+function updateBgMode() {
+    document.getElementById('bgModeSolid').classList.toggle('active', state.bgMode === 'solid');
+    document.getElementById('bgModeFade').classList.toggle('active', state.bgMode === 'fade');
+    document.getElementById('bgDirectionContainer').classList.toggle('hidden', state.bgMode === 'solid');
+}
+
+function updateBgStops() {
+    const container = document.getElementById('bgStops');
+    container.innerHTML = '';
+    state.bgColors.forEach((color, i) => {
+        const stop = document.createElement('div');
+        stop.className = 'color-stop';
+        stop.innerHTML = `<input type="color" value="${color}">${state.bgColors.length > 1 ? '<button class="remove-stop">×</button>' : ''}`;
+        stop.querySelector('input').oninput = e => { state.bgColors[i] = e.target.value; updateBgPreview(); };
+        const rm = stop.querySelector('.remove-stop');
+        if (rm) rm.onclick = () => { state.bgColors.splice(i, 1); updateBgStops(); };
+        container.appendChild(stop);
+    });
+    updateBgPreview();
+}
+
+function updateBgPreview() {
+    const bar = document.getElementById('bgGradientPreview');
+    bar.style.background = state.bgColors.length === 1 ? state.bgColors[0] : `linear-gradient(90deg, ${state.bgColors.join(', ')})`;
+}
+
+function renderBgPresets() {
+    const container = document.getElementById('bgPresets');
+    container.innerHTML = '';
+    state.bgPresets.forEach((preset, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'color-preset';
+        btn.style.background = preset.colors.length === 1 ? preset.colors[0] : `linear-gradient(135deg, ${preset.colors.join(', ')})`;
+        btn.title = preset.name;
+        if (i >= defaultBgPresets.length) btn.innerHTML = '<button class="delete-preset">×</button>';
+        btn.onclick = e => {
+            if (e.target.classList.contains('delete-preset')) { state.bgPresets.splice(i, 1); renderBgPresets(); return; }
+            state.bgColors = [...preset.colors];
+            state.bgMode = preset.colors.length > 1 ? 'fade' : 'solid';
+            state.bgDir = preset.dir || 'vertical';
+            updateBgStops(); updateBgMode();
+        };
+        container.appendChild(btn);
+    });
+}
+
+function saveBgPreset() {
+    state.bgPresets.push({ colors: [...state.bgColors], dir: state.bgDir, name: `Custom ${state.bgPresets.length + 1}` });
+    renderBgPresets();
 }
 
 function applyResolution() {
@@ -839,71 +592,28 @@ function applyResolution() {
     state.canvasWidth = constrain(w, 100, 4000);
     state.canvasHeight = constrain(h, 100, 4000);
     resizeCanvas(state.canvasWidth, state.canvasHeight);
-    document.getElementById('resWidth').value = state.canvasWidth;
-    document.getElementById('resHeight').value = state.canvasHeight;
 }
 
 function syncUIWithState() {
-    // Pattern
-    document.querySelectorAll('.preset-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.pattern === state.pattern);
-    });
-
-    // Count
+    document.querySelectorAll('.preset-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.pattern === state.pattern));
     document.getElementById('countValue').value = state.count;
     document.getElementById('countSlider').value = state.count;
-
-    // Ranges
-    ['weight', 'spacing', 'length', 'opacity'].forEach(syncRange);
-
-    // Transform
-    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(param => {
-        const slider = document.getElementById(param);
-        const input = document.getElementById(`${param}Value`);
-        if (slider) slider.value = state[param];
-        if (input) input.value = state[param];
+    ['weight', 'spacing', 'length', 'opacity'].forEach(p => {
+        document.getElementById(`${p}Start`).value = state[p].start;
+        document.getElementById(`${p}End`).value = state[p].end;
+        document.getElementById(`${p}SliderStart`).value = state[p].start;
+        document.getElementById(`${p}SliderEnd`).value = state[p].end;
+        document.getElementById(`${p}FadeStart`).value = state[`${p}FadeStart`];
+        document.getElementById(`${p}FadeEnd`).value = state[`${p}FadeEnd`];
+        document.getElementById(`${p}Curve`).value = state[`${p}Curve`];
     });
-}
-
-function syncRange(param) {
-    const startInput = document.getElementById(`${param}Start`);
-    const endInput = document.getElementById(`${param}End`);
-    const startSlider = document.getElementById(`${param}SliderStart`);
-    const endSlider = document.getElementById(`${param}SliderEnd`);
-    const rangeEl = document.getElementById(`${param}Range`);
-    const fadeStart = document.getElementById(`${param}FadeStart`);
-    const fadeEnd = document.getElementById(`${param}FadeEnd`);
-    const curve = document.getElementById(`${param}Curve`);
-
-    if (startInput) startInput.value = state[param].start;
-    if (endInput) endInput.value = state[param].end;
-    if (startSlider) startSlider.value = state[param].start;
-    if (endSlider) endSlider.value = state[param].end;
-    if (fadeStart) fadeStart.value = state[`${param}FadeStart`];
-    if (fadeEnd) fadeEnd.value = state[`${param}FadeEnd`];
-    if (curve) curve.value = state[`${param}Curve`];
-
-    if (rangeEl && startSlider) {
-        const min = parseFloat(startSlider.min);
-        const max = parseFloat(startSlider.max);
-        const startPct = ((state[param].start - min) / (max - min)) * 100;
-        const endPct = ((state[param].end - min) / (max - min)) * 100;
-        rangeEl.style.left = `${Math.min(startPct, endPct)}%`;
-        rangeEl.style.right = `${100 - Math.max(startPct, endPct)}%`;
-    }
-
-    // Sync axis toggle
-    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
-    if (toggle) {
-        toggle.querySelectorAll('.axis-btn').forEach(btn => {
-            const axis = state[`${param}Axis`];
-            if (axis === 'xy') {
-                btn.classList.add('active');
-            } else {
-                btn.classList.toggle('active', btn.dataset.axis === axis);
-            }
-        });
-    }
+    ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => {
+        const s = document.getElementById(p), i = document.getElementById(`${p}Value`);
+        if (s) s.value = state[p];
+        if (i) i.value = state[p];
+    });
+    updateColorStops();
+    updateColorMode();
 }
 
 function resetAttribute(param) {
@@ -913,90 +623,45 @@ function resetAttribute(param) {
         state[`${param}FadeStart`] = DEFAULTS[`${param}FadeStart`];
         state[`${param}FadeEnd`] = DEFAULTS[`${param}FadeEnd`];
         state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
-        state[`${param}Axis`] = DEFAULTS[`${param}Axis`];
+        state[`${param}Rate`] = DEFAULTS[`${param}Rate`];
     }
-    else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) {
-        state[param] = DEFAULTS[param];
-    }
-    else if (param === 'color') {
-        state.colors = [...DEFAULTS.colors];
-    }
-    else if (param === 'bg') {
-        state.bgColors = [...DEFAULTS.bgColors];
-        state.bgDir = DEFAULTS.bgDir;
-    }
-
+    else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) state[param] = DEFAULTS[param];
+    else if (param === 'color') { state.colors = [...DEFAULTS.colors]; state.colorMode = 'solid'; }
+    else if (param === 'bg') { state.bgColors = [...DEFAULTS.bgColors]; state.bgMode = 'solid'; }
     syncUIWithState();
     saveStateToActiveLayer();
 }
 
 function resetAll() {
-    Object.keys(DEFAULTS).forEach(key => {
-        if (Array.isArray(DEFAULTS[key])) {
-            state[key] = [...DEFAULTS[key]];
-        } else if (typeof DEFAULTS[key] === 'object') {
-            state[key] = { ...DEFAULTS[key] };
-        } else {
-            state[key] = DEFAULTS[key];
-        }
+    Object.keys(DEFAULTS).forEach(k => {
+        if (Array.isArray(DEFAULTS[k])) state[k] = [...DEFAULTS[k]];
+        else if (typeof DEFAULTS[k] === 'object') state[k] = { ...DEFAULTS[k] };
+        else state[k] = DEFAULTS[k];
     });
     syncUIWithState();
+    updateBgStops();
+    updateBgMode();
     saveStateToActiveLayer();
-
-    // Reset UI presets
-    document.querySelectorAll('.color-preset').forEach((btn, i) => btn.classList.toggle('active', i === 0));
-    document.querySelectorAll('.bg-preset').forEach((btn, i) => btn.classList.toggle('active', i === 0));
 }
 
 function randomize() {
     const patterns = ['lines', 'radial', 'circles', 'grid', 'dots', 'triangle'];
     state.pattern = patterns[floor(random(patterns.length))];
-
     state.count = floor(random(10, 60));
-
     state.weight = { start: random(0.5, 15), end: random(0.5, 15) };
     state.spacing = { start: random(0.3, 2), end: random(0.3, 2) };
     state.length = { start: random(50, 100), end: random(50, 100) };
     state.opacity = { start: random(60, 100), end: random(60, 100) };
-
-    ['weight', 'spacing', 'length', 'opacity'].forEach(param => {
-        state[`${param}FadeStart`] = floor(random(0, 30));
-        state[`${param}FadeEnd`] = floor(random(70, 100));
-        state[`${param}Axis`] = random() > 0.5 ? 'x' : 'y';
-    });
-
-    // Pick random color preset
-    const presets = document.querySelectorAll('#colorPresets .color-preset');
-    const randomPreset = presets[floor(random(presets.length))];
-    state.colors = randomPreset.dataset.colors.split(',');
-    presets.forEach(b => b.classList.remove('active'));
-    randomPreset.classList.add('active');
-
-    if (random() > 0.6) {
-        state.rotX = floor(random(-45, 45));
-        state.rotY = floor(random(-45, 45));
-    } else {
-        state.rotX = 0;
-        state.rotY = 0;
-    }
+    const preset = state.colorPresets[floor(random(state.colorPresets.length))];
+    state.colors = [...preset.colors];
+    state.colorMode = preset.colors.length > 1 ? 'fade' : 'solid';
     state.rotZ = floor(random(-90, 90));
-
     syncUIWithState();
     saveStateToActiveLayer();
 }
 
-// =========================================
-// Save/Load
-// =========================================
-
 function saveProject() {
-    const project = {
-        version: '3.1',
-        resolution: { width: state.canvasWidth, height: state.canvasHeight },
-        bg: { colors: state.bgColors, dir: state.bgDir },
-        layers: state.layers.map(l => ({ ...l }))
-    };
-
+    const project = { version: '4.0', resolution: { width: state.canvasWidth, height: state.canvasHeight }, bg: { colors: state.bgColors, mode: state.bgMode, dir: state.bgDir }, layers: state.layers, colorPresets: state.colorPresets, bgPresets: state.bgPresets };
     const blob = new Blob([JSON.stringify(project, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1007,34 +672,16 @@ function saveProject() {
 function loadProject(e) {
     const file = e.target.files[0];
     if (!file) return;
-
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = event => {
         try {
-            const project = JSON.parse(event.target.result);
-
-            if (project.resolution) {
-                state.canvasWidth = project.resolution.width || 800;
-                state.canvasHeight = project.resolution.height || 800;
-                resizeCanvas(state.canvasWidth, state.canvasHeight);
-                document.getElementById('resWidth').value = state.canvasWidth;
-                document.getElementById('resHeight').value = state.canvasHeight;
-            }
-
-            if (project.bg) {
-                state.bgColors = project.bg.colors || ['#000000'];
-                state.bgDir = project.bg.dir || 'solid';
-            }
-
-            if (project.layers && project.layers.length > 0) {
-                state.layers = project.layers;
-                state.activeLayerId = state.layers[0].id;
-                loadLayerToState(getActiveLayer());
-                updateLayersUI();
-            }
-        } catch (err) {
-            alert('Error: ' + err.message);
-        }
+            const p = JSON.parse(event.target.result);
+            if (p.resolution) { state.canvasWidth = p.resolution.width; state.canvasHeight = p.resolution.height; resizeCanvas(state.canvasWidth, state.canvasHeight); }
+            if (p.bg) { state.bgColors = p.bg.colors; state.bgMode = p.bg.mode || 'solid'; state.bgDir = p.bg.dir || 'vertical'; updateBgStops(); updateBgMode(); }
+            if (p.layers) { state.layers = p.layers; state.activeLayerId = state.layers[0].id; loadLayerToState(getActiveLayer()); updateLayersUI(); }
+            if (p.colorPresets) { state.colorPresets = p.colorPresets; renderColorPresets(); }
+            if (p.bgPresets) { state.bgPresets = p.bgPresets; renderBgPresets(); }
+        } catch (err) { alert('Error: ' + err.message); }
     };
     reader.readAsText(file);
     e.target.value = '';
