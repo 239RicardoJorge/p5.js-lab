@@ -543,41 +543,55 @@ body {
     background: var(--accent-secondary);
 }
 
-.curve-select {
-    width: 38px;
-    padding: 2px;
-    background: var(--bg-input);
-    border: 1px solid var(--border);
-    border-radius: 2px;
-    color: var(--text-secondary);
-    font-size: 7px;
-    font-family: var(--font-mono);
-    flex-shrink: 0;
-}
-
-/* Color Fade Controls */
-.color-fade-controls {
+/* Advanced Controls */
+.advanced-controls {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     margin-top: 6px;
     padding-top: 6px;
     border-top: 1px solid var(--border);
 }
 
-.smoothness-control {
+.control-group {
     display: flex;
     align-items: center;
     gap: 4px;
-    margin-top: 4px;
 }
 
-.smoothness-slider {
-    -webkit-appearance: none;
+.control-group.grow {
     flex: 1;
+}
+
+.mult-input,
+.steps-input {
+    width: 30px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 9px;
+    padding: 2px 4px;
+    text-align: center;
+}
+
+.mult-input:focus,
+.steps-input:focus {
+    border-color: var(--accent);
+    outline: none;
+}
+
+.steps-slider {
+    flex: 1;
+    min-width: 40px;
     height: 3px;
     background: var(--bg-input);
     border-radius: 2px;
+    -webkit-appearance: none;
 }
 
-.smoothness-slider::-webkit-slider-thumb {
+.steps-slider::-webkit-slider-thumb {
     -webkit-appearance: none;
     width: 8px;
     height: 8px;
@@ -586,12 +600,22 @@ body {
     cursor: pointer;
 }
 
-.steps-value {
-    font-family: var(--font-mono);
+.label {
     font-size: 8px;
     color: var(--text-muted);
-    width: 16px;
-    text-align: right;
+    text-transform: uppercase;
+}
+
+.curve-select {
+    width: 45px;
+    padding: 2px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-secondary);
+    font-size: 8px;
+    font-family: var(--font-mono);
+    flex-shrink: 0;
 }
 
 /* Single Slider */

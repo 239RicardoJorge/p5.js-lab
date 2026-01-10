@@ -4,10 +4,10 @@
 
 const DEFAULTS = {
     count: 20,
-    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear', weightMult: 1, weightSteps: 100,
-    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear', spacingMult: 1, spacingSteps: 100,
-    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear', lengthMult: 1, lengthSteps: 100,
-    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear', opacityMult: 1, opacitySteps: 100,
+    weight: { start: 2, end: 2 }, weightAxis: 'x', weightFadeStart: 0, weightFadeEnd: 100, weightCurve: 'linear',
+    spacing: { start: 1, end: 1 }, spacingAxis: 'x', spacingFadeStart: 0, spacingFadeEnd: 100, spacingCurve: 'linear',
+    length: { start: 100, end: 100 }, lengthAxis: 'x', lengthFadeStart: 0, lengthFadeEnd: 100, lengthCurve: 'linear',
+    opacity: { start: 100, end: 100 }, opacityAxis: 'x', opacityFadeStart: 0, opacityFadeEnd: 100, opacityCurve: 'linear',
     colors: ['#ffffff'], colorMode: 'solid', colorAxis: 'x', colorFadeStart: 0, colorFadeEnd: 100, colorSteps: 100,
     rotX: 0, rotY: 0, rotZ: 0, posX: 50, posY: 50, scale: 100,
     bgColors: ['#000000'], bgMode: 'solid', bgDir: 'vertical'
@@ -55,22 +55,11 @@ function applyCurve(t, type) {
     return t;
 }
 
-function getValueWithFade(range, rawT, fs, fe, curve, steps, mult) {
+function getValueWithFade(range, rawT, fs, fe, curve) {
     const fStart = fs / 100, fEnd = fe / 100;
-
-    // Apply steps (quantize time/progress) like color
-    let t = rawT;
-    if (steps && steps < 100) {
-        t = Math.floor(t * steps) / (steps - 1);
-        t = Math.min(1, t);
-    }
-
-    let val;
-    if (t <= fStart) val = range.start;
-    else if (t >= fEnd) val = range.end;
-    else val = lerp(range.start, range.end, applyCurve((t - fStart) / (fEnd - fStart), curve));
-
-    return val * (mult ?? 1);
+    if (rawT <= fStart) return range.start;
+    if (rawT >= fEnd) return range.end;
+    return lerp(range.start, range.end, applyCurve((rawT - fStart) / (fEnd - fStart), curve));
 }
 
 function getGradientColor(colors, rawT, fadeStart, fadeEnd, steps) {
@@ -105,7 +94,7 @@ function createLayerFromState() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -154,7 +143,7 @@ function loadLayerToState(layer) {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof layer[p] === 'object') state[p] = { ...layer[p] };
         else state[p] = layer[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (layer[p + s] !== undefined) state[p + s] = layer[p + s];
         });
     });
@@ -175,7 +164,7 @@ function saveStateToActiveLayer() {
     ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
         if (typeof state[p] === 'object') layer[p] = { ...state[p] };
         else layer[p] = state[p];
-        ['Axis', 'FadeStart', 'FadeEnd', 'Curve', 'Mult', 'Steps'].forEach(s => {
+        ['Axis', 'FadeStart', 'FadeEnd', 'Curve'].forEach(s => {
             if (state[p + s] !== undefined) layer[p + s] = state[p + s];
         });
     });
@@ -234,20 +223,18 @@ function drawLines(layer) {
     let cumulative = 0;
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? t : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+        const spacingMult = getValueWithFade(layer.spacing, layer.spacingAxis === 'x' ? t : 0.5, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
         positions.push(cumulative);
         cumulative += spacingMult;
     }
     // Normalize to 0-1 range
-    const maxPos = cumulative - (positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult) : 0);
+    const maxPos = cumulative - (positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve) : 1);
 
     for (let i = 0; i < count; i++) {
-        // Fix for Spacing 0: If maxPos is negligible, check if user intended 0 spacing (lines overlapping at start)
-        const tx = maxPos > 0.0001 ? positions[i] / maxPos : 0;
-
-        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+        const tx = maxPos > 0 ? positions[i] / maxPos : (count > 1 ? i / (count - 1) : 0.5);
+        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
         strokeWeight(max(0.5, weight));
@@ -260,10 +247,10 @@ function drawRadial(layer) {
     const w = state.canvasWidth, h = state.canvasHeight, cx = w / 2, cy = h / 2, count = layer.count, radius = Math.min(w, h) * 0.45;
     for (let i = 0; i < count; i++) {
         const t = i / count, angle = t * TWO_PI;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const lengthPct = getValueWithFade(layer.length, t, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -278,10 +265,10 @@ function drawCircles(layer) {
     noFill();
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
         const r = (t * 0.9 + 0.1) * maxR * spacingMult;
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -295,13 +282,13 @@ function drawGrid(layer) {
     for (let row = 0; row < gs; row++) {
         for (let col = 0; col < gs; col++) {
             const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
-            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
             const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
+            const weight = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
             const lt = getAxisProgress(col, row, gs, gs, layer.lengthAxis);
-            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
+            const sizeMult = getValueWithFade(layer.length, lt, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve) / 100;
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
             const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
             strokeWeight(max(0.5, weight));
@@ -319,11 +306,11 @@ function drawDots(layer) {
     for (let row = 0; row < gs; row++) {
         for (let col = 0; col < gs; col++) {
             const st = getAxisProgress(col, row, gs, gs, layer.spacingAxis);
-            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+            const spacingMult = getValueWithFade(layer.spacing, st, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
             const wt = getAxisProgress(col, row, gs, gs, layer.weightAxis);
-            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult) * 2 * spacingMult;
+            const dotSize = getValueWithFade(layer.weight, wt, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve) * 2 * spacingMult;
             const ot = getAxisProgress(col, row, gs, gs, layer.opacityAxis);
-            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+            const opacityVal = getValueWithFade(layer.opacity, ot, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
             const ct = getAxisProgress(col, row, gs, gs, layer.colorAxis);
             const c = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, ct, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
             fill(c.r, c.g, c.b, opacityVal / 100 * 255);
@@ -337,12 +324,12 @@ function drawTriangle(layer) {
     const topX = w / 2, topY = h * 0.1, leftY = h * 0.9;
     for (let i = 0; i < count; i++) {
         const t = count > 1 ? i / (count - 1) : 0.5;
-        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult);
+        const spacingMult = getValueWithFade(layer.spacing, t, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve);
         const adjustedT = t * spacingMult;
         const y = lerp(topY, leftY, Math.min(1, adjustedT)), progress = (y - topY) / (leftY - topY);
         const xLeft = lerp(topX, w * 0.1, progress), xRight = lerp(topX, w * 0.9, progress);
-        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+        const weight = getValueWithFade(layer.weight, t, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve);
+        const opacityVal = getValueWithFade(layer.opacity, t, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve);
         const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, t, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -506,24 +493,6 @@ function setupFadePosition(param) {
     const fs = document.getElementById(`${param}FadeStart`), fe = document.getElementById(`${param}FadeEnd`), curve = document.getElementById(`${param}Curve`);
     if (fs) fs.oninput = () => { state[`${param}FadeStart`] = parseFloat(fs.value); saveStateToActiveLayer(); };
     if (fe) fe.oninput = () => { state[`${param}FadeEnd`] = parseFloat(fe.value); saveStateToActiveLayer(); };
-
-    const mult = document.getElementById(`${param}Mult`);
-    const steps = document.getElementById(`${param}Steps`);
-    const stepsInput = document.getElementById(`${param}StepsInput`);
-
-    if (mult) mult.oninput = () => { state[`${param}Mult`] = parseFloat(mult.value); saveStateToActiveLayer(); };
-    if (steps) steps.oninput = () => {
-        state[`${param}Steps`] = parseInt(steps.value);
-        if (stepsInput) stepsInput.value = steps.value;
-        saveStateToActiveLayer();
-    };
-    if (stepsInput) stepsInput.oninput = () => {
-        let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > 100) val = 100;
-        state[`${param}Steps`] = val;
-        if (steps) steps.value = val;
-        saveStateToActiveLayer();
-    };
     if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
 }
 
@@ -541,17 +510,10 @@ function setupColorSystem() {
     if (cfe) cfe.oninput = () => { state.colorFadeEnd = parseFloat(cfe.value); saveStateToActiveLayer(); };
 
     // Color steps
-    const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
+    const stepsSlider = document.getElementById('colorSteps'), stepsValue = document.getElementById('colorStepsValue');
     if (stepsSlider) stepsSlider.oninput = () => {
         state.colorSteps = parseInt(stepsSlider.value);
-        if (stepsInput) stepsInput.value = stepsSlider.value;
-        saveStateToActiveLayer();
-    };
-    if (stepsInput) stepsInput.oninput = () => {
-        let val = parseInt(stepsInput.value);
-        if (val < 1) val = 1; if (val > 100) val = 100;
-        state.colorSteps = val;
-        if (stepsSlider) stepsSlider.value = val;
+        stepsValue.textContent = state.colorSteps >= 100 ? '∞' : state.colorSteps;
         saveStateToActiveLayer();
     };
 }
@@ -693,12 +655,6 @@ function syncUIWithState() {
         document.getElementById(`${p}FadeStart`).value = state[`${p}FadeStart`];
         document.getElementById(`${p}FadeEnd`).value = state[`${p}FadeEnd`];
         document.getElementById(`${p}Curve`).value = state[`${p}Curve`];
-        const mult = document.getElementById(`${p}Mult`);
-        const steps = document.getElementById(`${p}Steps`);
-        const stepsInput = document.getElementById(`${p}StepsInput`);
-        if (mult) mult.value = state[`${p}Mult`] ?? 1;
-        if (steps) steps.value = state[`${p}Steps`] ?? 100;
-        if (stepsInput) stepsInput.value = state[`${p}Steps`] ?? 100;
     });
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => {
         const s = document.getElementById(p), i = document.getElementById(`${p}Value`);
@@ -707,11 +663,11 @@ function syncUIWithState() {
     });
     // Color fade sync
     const cfs = document.getElementById('colorFadeStart'), cfe = document.getElementById('colorFadeEnd');
-    const stepsSlider = document.getElementById('colorSteps'), stepsInput = document.getElementById('colorStepsInput');
+    const stepsSlider = document.getElementById('colorSteps'), stepsValue = document.getElementById('colorStepsValue');
     if (cfs) cfs.value = state.colorFadeStart;
     if (cfe) cfe.value = state.colorFadeEnd;
     if (stepsSlider) stepsSlider.value = state.colorSteps;
-    if (stepsInput) stepsInput.value = state.colorSteps;
+    if (stepsValue) stepsValue.textContent = state.colorSteps >= 100 ? '∞' : state.colorSteps;
     updateColorStops();
     updateColorMode();
 }
@@ -723,8 +679,6 @@ function resetAttribute(param) {
         state[`${param}FadeStart`] = DEFAULTS[`${param}FadeStart`];
         state[`${param}FadeEnd`] = DEFAULTS[`${param}FadeEnd`];
         state[`${param}Curve`] = DEFAULTS[`${param}Curve`];
-        state[`${param}Mult`] = DEFAULTS[`${param}Mult`];
-        state[`${param}Steps`] = DEFAULTS[`${param}Steps`];
     }
     else if (['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].includes(param)) state[param] = DEFAULTS[param];
     else if (param === 'color') { state.colors = [...DEFAULTS.colors]; state.colorMode = 'solid'; }

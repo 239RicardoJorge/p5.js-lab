@@ -117,18 +117,6 @@
                                 value="0">
                             <input type="range" class="pos-slider end" id="weightFadeEnd" min="0" max="100" value="100">
                             <span class="fade-label">max</span>
-                        </div>
-                        <div class="advanced-controls">
-                            <div class="control-group">
-                                <span class="label">Mult</span>
-                                <input type="number" class="mult-input" id="weightMult" value="1" step="0.1">
-                            </div>
-                            <div class="control-group grow">
-                                <span class="label">Steps</span>
-                                <input type="range" class="steps-slider" id="weightSteps" min="1" max="100" value="100">
-                                <input type="number" class="steps-input" id="weightStepsInput" value="100" min="1"
-                                    max="100">
-                            </div>
                             <select class="curve-select" id="weightCurve">
                                 <option value="linear">Lin</option>
                                 <option value="easeIn">In</option>
@@ -171,19 +159,6 @@
                             <input type="range" class="pos-slider end" id="spacingFadeEnd" min="0" max="100"
                                 value="100">
                             <span class="fade-label">max</span>
-                        </div>
-                        <div class="advanced-controls">
-                            <div class="control-group">
-                                <span class="label">Mult</span>
-                                <input type="number" class="mult-input" id="spacingMult" value="1" step="0.1">
-                            </div>
-                            <div class="control-group grow">
-                                <span class="label">Steps</span>
-                                <input type="range" class="steps-slider" id="spacingSteps" min="1" max="100"
-                                    value="100">
-                                <input type="number" class="steps-input" id="spacingStepsInput" value="100" min="1"
-                                    max="100">
-                            </div>
                             <select class="curve-select" id="spacingCurve">
                                 <option value="linear">Lin</option>
                                 <option value="easeIn">In</option>
@@ -224,18 +199,6 @@
                                 value="0">
                             <input type="range" class="pos-slider end" id="lengthFadeEnd" min="0" max="100" value="100">
                             <span class="fade-label">max</span>
-                        </div>
-                        <div class="advanced-controls">
-                            <div class="control-group">
-                                <span class="label">Mult</span>
-                                <input type="number" class="mult-input" id="lengthMult" value="1" step="0.1">
-                            </div>
-                            <div class="control-group grow">
-                                <span class="label">Steps</span>
-                                <input type="range" class="steps-slider" id="lengthSteps" min="1" max="100" value="100">
-                                <input type="number" class="steps-input" id="lengthStepsInput" value="100" min="1"
-                                    max="100">
-                            </div>
                             <select class="curve-select" id="lengthCurve">
                                 <option value="linear">Lin</option>
                                 <option value="easeIn">In</option>
@@ -277,19 +240,6 @@
                             <input type="range" class="pos-slider end" id="opacityFadeEnd" min="0" max="100"
                                 value="100">
                             <span class="fade-label">max</span>
-                        </div>
-                        <div class="advanced-controls">
-                            <div class="control-group">
-                                <span class="label">Mult</span>
-                                <input type="number" class="mult-input" id="opacityMult" value="1" step="0.1">
-                            </div>
-                            <div class="control-group grow">
-                                <span class="label">Steps</span>
-                                <input type="range" class="steps-slider" id="opacitySteps" min="1" max="100"
-                                    value="100">
-                                <input type="number" class="steps-input" id="opacityStepsInput" value="100" min="1"
-                                    max="100">
-                            </div>
                             <select class="curve-select" id="opacityCurve">
                                 <option value="linear">Lin</option>
                                 <option value="easeIn">In</option>
@@ -332,8 +282,8 @@
                         </div>
                         <div class="smoothness-control">
                             <span class="fade-label">Steps</span>
-                            <input type="range" class="smoothness-slider" id="colorSteps" min="1" max="100" value="100">
-                            <input type="number" class="steps-input" id="colorStepsInput" value="100" min="1" max="100">
+                            <input type="range" class="smoothness-slider" id="colorSteps" min="2" max="100" value="100">
+                            <span class="steps-value" id="colorStepsValue">∞</span>
                         </div>
                     </div>
 
