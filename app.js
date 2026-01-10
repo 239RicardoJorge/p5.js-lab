@@ -260,21 +260,32 @@ function drawLines(layer) {
     }
 
     const fit = layer.spacingFit ?? true;
-    const maxPos = cumulative - (positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult) : 0);
+
+    // Logic for Layout Width
+    // maxPos is the sum of spacings (cumulative) minus the last spacing (which is after the last item)
+    const lastSpacing = positions.length > 0 ? getValueWithFade(layer.spacing, 1, layer.spacingFadeStart, layer.spacingFadeEnd, layer.spacingCurve, layer.spacingSteps, layer.spacingMult) : 0;
+    const maxPos = cumulative - lastSpacing;
     const ABS_UNIT = 40;
 
+    // Centering Logic (Fit=False)
+    const totalWidth = fit ? w : maxPos * ABS_UNIT;
+    const startX = fit ? 0 : (w - totalWidth) / 2;
+
     for (let i = 0; i < count; i++) {
+        const indexT = count > 1 ? i / (count - 1) : 0.5;
         let tx;
         if (fit) {
             tx = maxPos > 0.0001 ? positions[i] / maxPos : 0;
         } else {
-            tx = (positions[i] * ABS_UNIT) / w;
+            tx = (startX + positions[i] * ABS_UNIT) / w;
         }
 
-        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? tx : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
-        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? tx : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
-        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? tx : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
-        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? tx : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
+        // Use IndexT for properties if Axis is X ("Fit" behavior for props, creating consistent gradients)
+        const weight = getValueWithFade(layer.weight, layer.weightAxis === 'x' ? indexT : 0.5, layer.weightFadeStart, layer.weightFadeEnd, layer.weightCurve, layer.weightSteps, layer.weightMult);
+        const lengthPct = getValueWithFade(layer.length, layer.lengthAxis === 'x' ? indexT : 0.5, layer.lengthFadeStart, layer.lengthFadeEnd, layer.lengthCurve, layer.lengthSteps, layer.lengthMult) / 100;
+        const opacityVal = getValueWithFade(layer.opacity, layer.opacityAxis === 'x' ? indexT : 0.5, layer.opacityFadeStart, layer.opacityFadeEnd, layer.opacityCurve, layer.opacitySteps, layer.opacityMult);
+        const col = layer.colorMode === 'solid' ? hexToRgb(layer.colors[0]) : getGradientColor(layer.colors, layer.colorAxis === 'x' ? indexT : 0.5, layer.colorFadeStart, layer.colorFadeEnd, layer.colorSteps);
+
         const x = tx * w, halfGap = (1 - lengthPct) / 2 * h;
         strokeWeight(max(0.5, weight));
         stroke(col.r, col.g, col.b, opacityVal / 100 * 255);
@@ -555,8 +566,12 @@ function setupFadePosition(param) {
     };
 
     if (param === 'spacing') {
-        const fit = document.getElementById('spacingFit');
-        if (fit) fit.onchange = () => { state.spacingFit = fit.checked; saveStateToActiveLayer(); };
+        const fitBtn = document.getElementById('spacingFitBtn');
+        if (fitBtn) fitBtn.onclick = () => {
+            state.spacingFit = !state.spacingFit;
+            syncUIWithState();
+            saveStateToActiveLayer();
+        };
     }
     if (curve) curve.onchange = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
 }
@@ -735,8 +750,8 @@ function syncUIWithState() {
         if (stepsInput) stepsInput.value = state[`${p}Steps`] ?? 100;
     });
     // Spacing Fit Sync
-    const fit = document.getElementById('spacingFit');
-    if (fit) fit.checked = state.spacingFit ?? true;
+    const fitBtn = document.getElementById('spacingFitBtn');
+    if (fitBtn) fitBtn.classList.toggle('active', state.spacingFit ?? true);
 
     ['rotX', 'rotY', 'rotZ', 'posX', 'posY', 'scale'].forEach(p => {
         const s = document.getElementById(p), i = document.getElementById(`${p}Value`);

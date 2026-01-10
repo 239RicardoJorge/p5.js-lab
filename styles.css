@@ -1154,3 +1154,30 @@ body {
         display: none;
     }
 }
+
+/* UI Refinements */
+.fit-toggle-btn {
+    width: auto !important;
+    padding: 0 8px !important;
+    font-weight: 600;
+}
+
+.fit-toggle-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.control-group .label {
+    font-size: 9px;
+    color: var(--text-secondary);
+    margin-right: 4px;
+    text-transform: uppercase;
+    font-weight: 600;
+    min-width: 25px;
+}
+
+.mult-input {
+    width: 45px;
+    text-align: center;
+}
