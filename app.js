@@ -61,7 +61,10 @@ function getWaveValue(type, phase) {
     if (type === 'triangle') return p < 0.5 ? p * 2 : 2 - p * 2;
     if (type === 'square') return p < 0.5 ? 1 : 0;
     if (type === 'saw') return p;
-    return 0;
+    if (type === 'easeIn') return p * p;
+    if (type === 'easeOut') return 1 - (1 - p) * (1 - p);
+    if (type === 'easeInOut') return p < 0.5 ? 2 * p * p : 1 - Math.pow(-2 * p + 2, 2) / 2;
+    return (Math.sin(p * TWO_PI) + 1) / 2; // default to sine
 }
 
 function getValueWithFade(range, rawT, fs, fe, curve, rate, rateCurve) {
@@ -611,6 +614,13 @@ function syncUIWithState() {
         const s = document.getElementById(p), i = document.getElementById(`${p}Value`);
         if (s) s.value = state[p];
         if (i) i.value = state[p];
+    });
+    // Sync rate panels
+    ['count', 'weight', 'spacing', 'length', 'opacity'].forEach(p => {
+        const rateInput = document.getElementById(`${p}Rate`);
+        const rateCurve = document.getElementById(`${p}RateCurve`);
+        if (rateInput) rateInput.value = state[`${p}Rate`] || 0;
+        if (rateCurve) rateCurve.value = state[`${p}RateCurve`] || 'sine';
     });
     updateColorStops();
     updateColorMode();
