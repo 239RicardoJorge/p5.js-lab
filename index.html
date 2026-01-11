@@ -64,7 +64,7 @@
 
                 <!-- Grid Layout -->
                 <section class="section">
-                    <h3 class="section-title resetable" data-reset="grid">GRID</h3>
+                    <h3 class="section-title resetable" data-reset="grid">ESPAÇAMENTO</h3>
                     <div class="control-row">
                         <label class="control-label">Cols (X)</label>
                         <input type="number" class="value-input" id="colsValue" value="10" min="1" max="100">
@@ -759,10 +759,6 @@
                 <section class="section">
                     <div class="attr-header">
                         <h3 class="section-title resetable" data-reset="bg">FUNDO</h3>
-                        <div class="attr-controls">
-                            <button class="mode-btn active" id="bgModeSolid" title="Cor Sólida">■</button>
-                            <button class="mode-btn" id="bgModeFade" title="Gradiente">◐</button>
-                        </div>
                     </div>
 
                     <div class="color-stops-container" id="bgStopsContainer">
@@ -771,10 +767,32 @@
                     </div>
                     <div class="gradient-preview" id="bgGradientPreview"></div>
 
-                    <div class="bg-direction hidden" id="bgDirectionContainer">
-                        <button class="dir-btn active" data-dir="vertical" title="Vertical">↓</button>
-                        <button class="dir-btn" data-dir="horizontal" title="Horizontal">→</button>
-                        <button class="dir-btn" data-dir="radial" title="Radial">◎</button>
+                    <div class="color-fade-controls hidden" id="bgAdvancedControls">
+                        <div class="control-row bg-dir-row" style="justify-content: center; margin-bottom: 8px;">
+                            <div class="bg-direction" id="bgDirectionContainer">
+                                <button class="dir-btn active" data-dir="vertical" title="Vertical">↓</button>
+                                <button class="dir-btn" data-dir="horizontal" title="Horizontal">→</button>
+                                <button class="dir-btn" data-dir="radial" title="Radial">◎</button>
+                            </div>
+                        </div>
+
+                        <div class="advanced-row">
+                            <div class="control-group fade-group">
+                                <span class="label">Fade</span>
+                                <div class="dual-slider-mini">
+                                    <input type="range" class="pos-slider-dual" id="bgFadeStart" min="0" max="100"
+                                        value="0">
+                                    <input type="range" class="pos-slider-dual" id="bgFadeEnd" min="0" max="100"
+                                        value="100">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="bgFadeRange"></div>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <span class="label">Steps</span>
+                                <input type="number" class="steps-input" id="bgSteps" value="100" min="1" max="100">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="presets-section">

@@ -568,11 +568,21 @@ body {
 }
 
 .range-inputs .value-input {
-    width: 22px;
+    width: 22px !important;
+    min-width: 22px !important;
+    max-width: 22px !important;
     flex-shrink: 0;
-    padding: 1px 0;
+    padding: 0 !important;
+    border: 1px solid var(--border);
     font-size: 9px;
     text-align: center;
+    -moz-appearance: textfield;
+}
+
+.range-inputs .value-input::-webkit-outer-spin-button,
+.range-inputs .value-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .advanced-controls-row {
@@ -1535,4 +1545,4 @@ body {
 .mult-input {
     width: 45px;
     text-align: center;
-}
+}.hex-input { width: 45px; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-primary); font-family: var(--font-mono); font-size: 10px; padding: 2px 4px; border-radius: 2px; height: 18px; }
