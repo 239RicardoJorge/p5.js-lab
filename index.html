@@ -84,102 +84,132 @@
                 <section class="section">
                     <div class="attr-header">
                         <h3 class="section-title resetable" data-reset="rotation">ROTAÇÃO</h3>
-                        <div class="axis-toggle" data-param="rotation">
-                            <button class="axis-btn active" data-axis="x">X</button>
-                            <button class="axis-btn" data-axis="y">Y</button>
+                        <div class="axis-toggle-multi" data-param="rotation">
+                            <button class="axis-btn-multi active" data-axis="x" title="Toggle X axis">X</button>
+                            <button class="axis-btn-multi" data-axis="y" title="Toggle Y axis">Y</button>
                         </div>
                     </div>
                     <!-- Rotation X -->
-                    <div class="axis-content active" id="rotationXContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="rotationXStart" value="0" min="-360"
-                                    max="360">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="rotationXEnd" value="0" min="-360"
-                                    max="360">
+                    <div class="axis-panel" id="rotationXPanel" data-axis="x">
+                        <div class="axis-panel-header">
+                            <span class="axis-label x">X</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="rotationXPreviewStart">0°</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="rotationXPreviewEnd">0°</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="rotationXSliderStart" min="-360"
-                                    max="360" value="0">
-                                <input type="range" class="slider-track-input" id="rotationXSliderEnd" min="-360"
-                                    max="360" value="0">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="rotationXRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="rotationXFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="rotationXFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="rotationXMult" value="1" step="0.1">
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="rotationXStart" value="0"
+                                        min="-360" max="360">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="rotationXEnd" value="0" min="-360"
+                                        max="360">
                                 </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="rotationXSteps" min="1" max="100"
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="rotationXSliderStart" min="-360"
+                                        max="360" value="0">
+                                    <input type="range" class="slider-track-input" id="rotationXSliderEnd" min="-360"
+                                        max="360" value="0">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="rotationXRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="rotationXAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="rotationXModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="rotationXAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="rotationXFadeStart" min="0"
+                                        max="100" value="0">
+                                    <input type="range" class="pos-slider end" id="rotationXFadeEnd" min="0" max="100"
                                         value="100">
-                                    <input type="number" class="steps-input" id="rotationXStepsInput" value="100"
-                                        min="1" max="100">
                                 </div>
-                                <select class="curve-select" id="rotationXCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="rotationXSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="rotationXStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="rotationXMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="rotationXCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
                     <!-- Rotation Y -->
-                    <div class="axis-content hidden" id="rotationYContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="rotationYStart" value="0" min="-360"
-                                    max="360">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="rotationYEnd" value="0" min="-360"
-                                    max="360">
+                    <div class="axis-panel hidden" id="rotationYPanel" data-axis="y">
+                        <div class="axis-panel-header">
+                            <span class="axis-label y">Y</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="rotationYPreviewStart">0°</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="rotationYPreviewEnd">0°</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="rotationYSliderStart" min="-360"
-                                    max="360" value="0">
-                                <input type="range" class="slider-track-input" id="rotationYSliderEnd" min="-360"
-                                    max="360" value="0">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="rotationYRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="rotationYFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="rotationYFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="rotationYMult" value="1" step="0.1">
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="rotationYStart" value="0"
+                                        min="-360" max="360">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="rotationYEnd" value="0" min="-360"
+                                        max="360">
                                 </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="rotationYSteps" min="1" max="100"
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="rotationYSliderStart" min="-360"
+                                        max="360" value="0">
+                                    <input type="range" class="slider-track-input" id="rotationYSliderEnd" min="-360"
+                                        max="360" value="0">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="rotationYRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="rotationYAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="rotationYModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="rotationYAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="rotationYFadeStart" min="0"
+                                        max="100" value="0">
+                                    <input type="range" class="pos-slider end" id="rotationYFadeEnd" min="0" max="100"
                                         value="100">
-                                    <input type="number" class="steps-input" id="rotationYStepsInput" value="100"
-                                        min="1" max="100">
                                 </div>
-                                <select class="curve-select" id="rotationYCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="rotationYSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="rotationYStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="rotationYMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="rotationYCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -189,100 +219,132 @@
                 <section class="section">
                     <div class="attr-header">
                         <h3 class="section-title resetable" data-reset="weight">ESPESSURA</h3>
-                        <div class="axis-toggle" data-param="weight">
-                            <button class="axis-btn active" data-axis="x">X</button>
-                            <button class="axis-btn" data-axis="y">Y</button>
+                        <div class="axis-toggle-multi" data-param="weight">
+                            <button class="axis-btn-multi active" data-axis="x" title="Toggle X axis">X</button>
+                            <button class="axis-btn-multi" data-axis="y" title="Toggle Y axis">Y</button>
                         </div>
                     </div>
-                    <div class="axis-content active" id="weightXContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="weightXStart" value="2" step="0.5"
-                                    min="0.5" max="50">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="weightXEnd" value="2" step="0.5"
-                                    min="0.5" max="50">
+                    <!-- Weight X -->
+                    <div class="axis-panel" id="weightXPanel" data-axis="x">
+                        <div class="axis-panel-header">
+                            <span class="axis-label x">X</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="weightXPreviewStart">2</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="weightXPreviewEnd">2</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="weightXSliderStart" min="0.5"
-                                    max="50" step="0.5" value="2">
-                                <input type="range" class="slider-track-input" id="weightXSliderEnd" min="0.5" max="50"
-                                    step="0.5" value="2">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="weightXRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="weightXFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="weightXFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="weightXMult" value="1" step="0.1">
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="weightXStart" value="2"
+                                        step="0.5" min="0.5" max="50">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="weightXEnd" value="2" step="0.5"
+                                        min="0.5" max="50">
                                 </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="weightXSteps" min="1" max="100"
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="weightXSliderStart" min="0.5"
+                                        max="50" step="0.5" value="2">
+                                    <input type="range" class="slider-track-input" id="weightXSliderEnd" min="0.5"
+                                        max="50" step="0.5" value="2">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="weightXRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="weightXAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="weightXModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="weightXAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="weightXFadeStart" min="0" max="100"
+                                        value="0">
+                                    <input type="range" class="pos-slider end" id="weightXFadeEnd" min="0" max="100"
                                         value="100">
-                                    <input type="number" class="steps-input" id="weightXStepsInput" value="100" min="1"
-                                        max="100">
                                 </div>
-                                <select class="curve-select" id="weightXCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="weightXSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="weightXStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="weightXMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="weightXCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="axis-content hidden" id="weightYContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="weightYStart" value="2" step="0.5"
-                                    min="0.5" max="50">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="weightYEnd" value="2" step="0.5"
-                                    min="0.5" max="50">
+                    <!-- Weight Y -->
+                    <div class="axis-panel hidden" id="weightYPanel" data-axis="y">
+                        <div class="axis-panel-header">
+                            <span class="axis-label y">Y</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="weightYPreviewStart">2</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="weightYPreviewEnd">2</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="weightYSliderStart" min="0.5"
-                                    max="50" step="0.5" value="2">
-                                <input type="range" class="slider-track-input" id="weightYSliderEnd" min="0.5" max="50"
-                                    step="0.5" value="2">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="weightYRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="weightYFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="weightYFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="weightYMult" value="1" step="0.1">
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="weightYStart" value="2"
+                                        step="0.5" min="0.5" max="50">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="weightYEnd" value="2" step="0.5"
+                                        min="0.5" max="50">
                                 </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="weightYSteps" min="1" max="100"
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="weightYSliderStart" min="0.5"
+                                        max="50" step="0.5" value="2">
+                                    <input type="range" class="slider-track-input" id="weightYSliderEnd" min="0.5"
+                                        max="50" step="0.5" value="2">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="weightYRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="weightYAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="weightYModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="weightYAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="weightYFadeStart" min="0" max="100"
+                                        value="0">
+                                    <input type="range" class="pos-slider end" id="weightYFadeEnd" min="0" max="100"
                                         value="100">
-                                    <input type="number" class="steps-input" id="weightYStepsInput" value="100" min="1"
-                                        max="100">
                                 </div>
-                                <select class="curve-select" id="weightYCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="weightYSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="weightYStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="weightYMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="weightYCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -292,100 +354,132 @@
                 <section class="section">
                     <div class="attr-header">
                         <h3 class="section-title resetable" data-reset="length">COMPRIMENTO</h3>
-                        <div class="axis-toggle" data-param="length">
-                            <button class="axis-btn active" data-axis="x">X</button>
-                            <button class="axis-btn" data-axis="y">Y</button>
+                        <div class="axis-toggle-multi" data-param="length">
+                            <button class="axis-btn-multi active" data-axis="x" title="Toggle X axis">X</button>
+                            <button class="axis-btn-multi" data-axis="y" title="Toggle Y axis">Y</button>
                         </div>
                     </div>
-                    <div class="axis-content active" id="lengthXContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="lengthXStart" value="100" min="0"
-                                    max="100">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="lengthXEnd" value="100" min="0"
-                                    max="100">
+                    <!-- Length X -->
+                    <div class="axis-panel" id="lengthXPanel" data-axis="x">
+                        <div class="axis-panel-header">
+                            <span class="axis-label x">X</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="lengthXPreviewStart">100%</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="lengthXPreviewEnd">100%</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="lengthXSliderStart" min="0" max="100"
-                                    value="100">
-                                <input type="range" class="slider-track-input" id="lengthXSliderEnd" min="0" max="100"
-                                    value="100">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="lengthXRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="lengthXFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="lengthXFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="lengthXMult" value="1" step="0.1">
-                                </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="lengthXSteps" min="1" max="100"
-                                        value="100">
-                                    <input type="number" class="steps-input" id="lengthXStepsInput" value="100" min="1"
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="lengthXStart" value="100" min="0"
+                                        max="100">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="lengthXEnd" value="100" min="0"
                                         max="100">
                                 </div>
-                                <select class="curve-select" id="lengthXCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="lengthXSliderStart" min="0"
+                                        max="100" value="100">
+                                    <input type="range" class="slider-track-input" id="lengthXSliderEnd" min="0"
+                                        max="100" value="100">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="lengthXRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="lengthXAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="lengthXModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="lengthXAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="lengthXFadeStart" min="0" max="100"
+                                        value="0">
+                                    <input type="range" class="pos-slider end" id="lengthXFadeEnd" min="0" max="100"
+                                        value="100">
+                                </div>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="lengthXSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="lengthXStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="lengthXMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="lengthXCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="axis-content hidden" id="lengthYContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="lengthYStart" value="100" min="0"
-                                    max="100">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="lengthYEnd" value="100" min="0"
-                                    max="100">
+                    <!-- Length Y -->
+                    <div class="axis-panel hidden" id="lengthYPanel" data-axis="y">
+                        <div class="axis-panel-header">
+                            <span class="axis-label y">Y</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="lengthYPreviewStart">100%</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="lengthYPreviewEnd">100%</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="lengthYSliderStart" min="0" max="100"
-                                    value="100">
-                                <input type="range" class="slider-track-input" id="lengthYSliderEnd" min="0" max="100"
-                                    value="100">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="lengthYRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="lengthYFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="lengthYFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="lengthYMult" value="1" step="0.1">
-                                </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="lengthYSteps" min="1" max="100"
-                                        value="100">
-                                    <input type="number" class="steps-input" id="lengthYStepsInput" value="100" min="1"
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="lengthYStart" value="100" min="0"
+                                        max="100">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="lengthYEnd" value="100" min="0"
                                         max="100">
                                 </div>
-                                <select class="curve-select" id="lengthYCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="lengthYSliderStart" min="0"
+                                        max="100" value="100">
+                                    <input type="range" class="slider-track-input" id="lengthYSliderEnd" min="0"
+                                        max="100" value="100">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="lengthYRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="lengthYAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="lengthYModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="lengthYAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="lengthYFadeStart" min="0" max="100"
+                                        value="0">
+                                    <input type="range" class="pos-slider end" id="lengthYFadeEnd" min="0" max="100"
+                                        value="100">
+                                </div>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="lengthYSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="lengthYStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="lengthYMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="lengthYCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -395,100 +489,132 @@
                 <section class="section">
                     <div class="attr-header">
                         <h3 class="section-title resetable" data-reset="opacity">OPACIDADE</h3>
-                        <div class="axis-toggle" data-param="opacity">
-                            <button class="axis-btn active" data-axis="x">X</button>
-                            <button class="axis-btn" data-axis="y">Y</button>
+                        <div class="axis-toggle-multi" data-param="opacity">
+                            <button class="axis-btn-multi active" data-axis="x" title="Toggle X axis">X</button>
+                            <button class="axis-btn-multi" data-axis="y" title="Toggle Y axis">Y</button>
                         </div>
                     </div>
-                    <div class="axis-content active" id="opacityXContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="opacityXStart" value="100" min="0"
-                                    max="100">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="opacityXEnd" value="100" min="0"
-                                    max="100">
+                    <!-- Opacity X -->
+                    <div class="axis-panel" id="opacityXPanel" data-axis="x">
+                        <div class="axis-panel-header">
+                            <span class="axis-label x">X</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="opacityXPreviewStart">100%</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="opacityXPreviewEnd">100%</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="opacityXSliderStart" min="0"
-                                    max="100" value="100">
-                                <input type="range" class="slider-track-input" id="opacityXSliderEnd" min="0" max="100"
-                                    value="100">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="opacityXRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="opacityXFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="opacityXFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="opacityXMult" value="1" step="0.1">
-                                </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="opacityXSteps" min="1" max="100"
-                                        value="100">
-                                    <input type="number" class="steps-input" id="opacityXStepsInput" value="100" min="1"
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="opacityXStart" value="100"
+                                        min="0" max="100">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="opacityXEnd" value="100" min="0"
                                         max="100">
                                 </div>
-                                <select class="curve-select" id="opacityXCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="opacityXSliderStart" min="0"
+                                        max="100" value="100">
+                                    <input type="range" class="slider-track-input" id="opacityXSliderEnd" min="0"
+                                        max="100" value="100">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="opacityXRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="opacityXAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="opacityXModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="opacityXAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="opacityXFadeStart" min="0"
+                                        max="100" value="0">
+                                    <input type="range" class="pos-slider end" id="opacityXFadeEnd" min="0" max="100"
+                                        value="100">
+                                </div>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="opacityXSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="opacityXStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="opacityXMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="opacityXCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div class="axis-content hidden" id="opacityYContent">
-                        <div class="range-control">
-                            <div class="range-inputs">
-                                <input type="number" class="value-input start" id="opacityYStart" value="100" min="0"
-                                    max="100">
-                                <span class="range-arrow">→</span>
-                                <input type="number" class="value-input end" id="opacityYEnd" value="100" min="0"
-                                    max="100">
+                    <!-- Opacity Y -->
+                    <div class="axis-panel hidden" id="opacityYPanel" data-axis="y">
+                        <div class="axis-panel-header">
+                            <span class="axis-label y">Y</span>
+                            <div class="axis-values-preview">
+                                <span class="preview-value" id="opacityYPreviewStart">100%</span>
+                                <span class="preview-arrow">→</span>
+                                <span class="preview-value" id="opacityYPreviewEnd">100%</span>
                             </div>
-                            <div class="dual-slider large">
-                                <input type="range" class="slider-track-input" id="opacityYSliderStart" min="0"
-                                    max="100" value="100">
-                                <input type="range" class="slider-track-input" id="opacityYSliderEnd" min="0" max="100"
-                                    value="100">
-                                <div class="slider-track"></div>
-                                <div class="slider-range" id="opacityYRange"></div>
-                            </div>
-                            <div class="fade-position">
-                                <span class="fade-label">min</span>
-                                <input type="range" class="pos-slider start" id="opacityYFadeStart" min="0" max="100"
-                                    value="0">
-                                <input type="range" class="pos-slider end" id="opacityYFadeEnd" min="0" max="100"
-                                    value="100">
-                                <span class="fade-label">max</span>
-                            </div>
-                            <div class="advanced-controls">
-                                <div class="control-group">
-                                    <span class="label">Mult</span>
-                                    <input type="number" class="mult-input" id="opacityYMult" value="1" step="0.1">
-                                </div>
-                                <div class="control-group grow">
-                                    <span class="label">Steps</span>
-                                    <input type="range" class="steps-slider" id="opacityYSteps" min="1" max="100"
-                                        value="100">
-                                    <input type="number" class="steps-input" id="opacityYStepsInput" value="100" min="1"
+                        </div>
+                        <div class="axis-panel-content">
+                            <div class="range-control">
+                                <div class="range-inputs">
+                                    <input type="number" class="value-input start" id="opacityYStart" value="100"
+                                        min="0" max="100">
+                                    <span class="range-arrow">→</span>
+                                    <input type="number" class="value-input end" id="opacityYEnd" value="100" min="0"
                                         max="100">
                                 </div>
-                                <select class="curve-select" id="opacityYCurve">
-                                    <option value="linear">Lin</option>
-                                    <option value="easeIn">In</option>
-                                    <option value="easeOut">Out</option>
-                                    <option value="easeInOut">InOut</option>
-                                </select>
+                                <div class="dual-slider large">
+                                    <input type="range" class="slider-track-input" id="opacityYSliderStart" min="0"
+                                        max="100" value="100">
+                                    <input type="range" class="slider-track-input" id="opacityYSliderEnd" min="0"
+                                        max="100" value="100">
+                                    <div class="slider-track"></div>
+                                    <div class="slider-range" id="opacityYRange"></div>
+                                </div>
+                            </div>
+                            <div class="advanced-toggle" data-target="opacityYAdvanced">
+                                <span class="advanced-toggle-icon">▸</span>
+                                <span class="advanced-toggle-label">Advanced</span>
+                                <span class="advanced-modified-indicator" id="opacityYModified"></span>
+                            </div>
+                            <div class="advanced-panel hidden" id="opacityYAdvanced">
+                                <div class="fade-position">
+                                    <span class="fade-label">fade</span>
+                                    <input type="range" class="pos-slider start" id="opacityYFadeStart" min="0"
+                                        max="100" value="0">
+                                    <input type="range" class="pos-slider end" id="opacityYFadeEnd" min="0" max="100"
+                                        value="100">
+                                </div>
+                                <div class="advanced-controls-row">
+                                    <div class="control-group">
+                                        <span class="label">Steps</span>
+                                        <input type="range" class="steps-slider" id="opacityYSteps" min="0" max="100"
+                                            value="100">
+                                        <span class="steps-percent" id="opacityYStepsPercent">100%</span>
+                                    </div>
+                                    <div class="control-group">
+                                        <span class="label">Mult</span>
+                                        <input type="number" class="mult-input" id="opacityYMult" value="1" step="0.1">
+                                    </div>
+                                    <select class="curve-select" id="opacityYCurve">
+                                        <option value="linear">Lin</option>
+                                        <option value="easeIn">In</option>
+                                        <option value="easeOut">Out</option>
+                                        <option value="easeInOut">InOut</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                     </div>

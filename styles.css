@@ -311,6 +311,182 @@ body {
     border-color: var(--accent);
 }
 
+/* Multi-State Axis Toggle (NEW) */
+.axis-toggle-multi {
+    display: flex;
+    gap: 2px;
+}
+
+.axis-btn-multi {
+    width: 20px;
+    height: 18px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-size: 9px;
+    font-family: var(--font-mono);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition);
+}
+
+.axis-btn-multi:hover {
+    color: var(--text-primary);
+    border-color: var(--text-secondary);
+}
+
+.axis-btn-multi.active[data-axis="x"] {
+    background: var(--accent);
+    color: var(--bg-app);
+    border-color: var(--accent);
+}
+
+.axis-btn-multi.active[data-axis="y"] {
+    background: var(--accent-secondary);
+    color: var(--bg-app);
+    border-color: var(--accent-secondary);
+}
+
+/* Axis Panel (NEW) */
+.axis-panel {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+.axis-panel.hidden {
+    display: none;
+}
+
+.axis-panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+
+.axis-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1px;
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.axis-label.x {
+    background: rgba(255, 107, 53, 0.15);
+    color: var(--accent);
+}
+
+.axis-label.y {
+    background: rgba(0, 212, 255, 0.15);
+    color: var(--accent-secondary);
+}
+
+.axis-values-preview {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--text-muted);
+}
+
+.preview-value {
+    color: var(--text-secondary);
+}
+
+.preview-arrow {
+    font-size: 8px;
+    opacity: 0.5;
+}
+
+.axis-panel-content {
+    /* Content wrapper */
+}
+
+/* Advanced Toggle (NEW) */
+.advanced-toggle {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 0;
+    margin-top: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition);
+}
+
+.advanced-toggle:hover {
+    opacity: 0.8;
+}
+
+.advanced-toggle-icon {
+    font-size: 8px;
+    color: var(--text-muted);
+    transition: transform 0.2s ease;
+}
+
+.advanced-toggle.expanded .advanced-toggle-icon {
+    transform: rotate(90deg);
+}
+
+.advanced-toggle-label {
+    font-size: 8px;
+    font-family: var(--font-mono);
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.advanced-modified-indicator {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity var(--transition);
+}
+
+.advanced-modified-indicator.show {
+    opacity: 1;
+}
+
+/* Advanced Panel (NEW) */
+.advanced-panel {
+    padding: 8px;
+    margin-top: 6px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.advanced-panel.hidden {
+    display: none;
+}
+
+.advanced-controls-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.steps-percent {
+    font-family: var(--font-mono);
+    font-size: 9px;
+    color: var(--accent-secondary);
+    min-width: 32px;
+    text-align: right;
+}
+
 /* Shape Selector */
 .shape-selector {
     display: flex;

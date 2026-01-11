@@ -316,28 +316,38 @@ function initUI() {
 }
 
 function setupAttributeGroup(param) {
-    const toggle = document.querySelector(`.axis-toggle[data-param="${param}"]`);
+    // Multi-state toggle (NEW) - allows independent X and Y activation
+    const toggle = document.querySelector(`.axis-toggle-multi[data-param="${param}"]`);
     if (toggle) {
-        toggle.querySelectorAll('.axis-btn').forEach(btn => {
+        toggle.querySelectorAll('.axis-btn-multi').forEach(btn => {
             btn.onclick = () => {
+                // Toggle this button's active state (multi-select allowed)
+                btn.classList.toggle('active');
+
                 const axis = btn.dataset.axis;
-                toggle.querySelectorAll('.axis-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+                const panel = document.getElementById(`${param}${axis.toUpperCase()}Panel`);
 
-                const xContent = document.getElementById(`${param}XContent`);
-                const yContent = document.getElementById(`${param}YContent`);
-
-                if (xContent) {
-                    xContent.classList.toggle('active', axis === 'x');
-                    xContent.classList.toggle('hidden', axis !== 'x');
-                }
-                if (yContent) {
-                    yContent.classList.toggle('active', axis === 'y');
-                    yContent.classList.toggle('hidden', axis !== 'y');
+                if (panel) {
+                    panel.classList.toggle('hidden', !btn.classList.contains('active'));
                 }
             };
         });
     }
+
+    // Setup advanced toggle buttons
+    ['X', 'Y'].forEach(axis => {
+        const advToggle = document.querySelector(`.advanced-toggle[data-target="${param}${axis}Advanced"]`);
+        if (advToggle) {
+            advToggle.onclick = () => {
+                advToggle.classList.toggle('expanded');
+                const panel = document.getElementById(`${param}${axis}Advanced`);
+                if (panel) {
+                    panel.classList.toggle('hidden');
+                }
+            };
+        }
+    });
+
     setupRangeControl(`${param}X`);
     setupRangeControl(`${param}Y`);
     setupAdvancedControls(`${param}X`);
@@ -378,6 +388,11 @@ function setupRangeControl(param) {
 
         state[param].start = parseFloat(sS.value);
         state[param].end = parseFloat(eS.value);
+
+        // Update preview values (extract base param name from e.g. "rotationX")
+        const baseParam = param.replace(/[XY]$/, '');
+        updatePreviewValues(baseParam);
+
         saveStateToActiveLayer();
     }
     sI.oninput = () => { sS.value = sI.value; update(); };
@@ -389,27 +404,80 @@ function setupRangeControl(param) {
 
 function setupAdvancedControls(param) {
     const fs = document.getElementById(`${param}FadeStart`), fe = document.getElementById(`${param}FadeEnd`);
-    if (fs) fs.oninput = () => { state[`${param}FadeStart`] = parseFloat(fs.value); saveStateToActiveLayer(); };
-    if (fe) fe.oninput = () => { state[`${param}FadeEnd`] = parseFloat(fe.value); saveStateToActiveLayer(); };
+    if (fs) fs.oninput = () => {
+        state[`${param}FadeStart`] = parseFloat(fs.value);
+        updateAdvancedModifiedIndicator(param);
+        saveStateToActiveLayer();
+    };
+    if (fe) fe.oninput = () => {
+        state[`${param}FadeEnd`] = parseFloat(fe.value);
+        updateAdvancedModifiedIndicator(param);
+        saveStateToActiveLayer();
+    };
 
     const curve = document.getElementById(`${param}Curve`);
-    if (curve) curve.oninput = () => { state[`${param}Curve`] = curve.value; saveStateToActiveLayer(); };
+    if (curve) curve.oninput = () => {
+        state[`${param}Curve`] = curve.value;
+        updateAdvancedModifiedIndicator(param);
+        saveStateToActiveLayer();
+    };
 
     const mult = document.getElementById(`${param}Mult`);
-    if (mult) mult.oninput = () => { state[`${param}Mult`] = parseFloat(mult.value); saveStateToActiveLayer(); };
+    if (mult) mult.oninput = () => {
+        state[`${param}Mult`] = parseFloat(mult.value);
+        updateAdvancedModifiedIndicator(param);
+        saveStateToActiveLayer();
+    };
 
-    const steps = document.getElementById(`${param}Steps`), stepsInput = document.getElementById(`${param}StepsInput`);
+    // Steps now percentage-based
+    const steps = document.getElementById(`${param}Steps`);
+    const stepsPercent = document.getElementById(`${param}StepsPercent`);
     if (steps) steps.oninput = () => {
-        state[`${param}Steps`] = toLogSteps(parseInt(steps.value), 100);
-        if (stepsInput) stepsInput.value = state[`${param}Steps`];
+        const pct = parseInt(steps.value);
+        state[`${param}Steps`] = pct;
+        if (stepsPercent) stepsPercent.textContent = `${pct}%`;
+        updateAdvancedModifiedIndicator(param);
         saveStateToActiveLayer();
     };
-    if (stepsInput) stepsInput.oninput = () => {
-        let val = parseInt(stepsInput.value);
-        state[`${param}Steps`] = val;
-        if (steps) steps.value = fromLogSteps(val, 100);
-        saveStateToActiveLayer();
-    };
+}
+
+// Check if advanced settings differ from defaults
+function updateAdvancedModifiedIndicator(param) {
+    const indicator = document.getElementById(`${param}Modified`);
+    if (!indicator) return;
+
+    const fadeStart = state[`${param}FadeStart`] ?? 0;
+    const fadeEnd = state[`${param}FadeEnd`] ?? 100;
+    const curve = state[`${param}Curve`] ?? 'linear';
+    const mult = state[`${param}Mult`] ?? 1;
+    const steps = state[`${param}Steps`] ?? 100;
+
+    // Check if any value differs from default
+    const isModified = fadeStart !== 0 || fadeEnd !== 100 || curve !== 'linear' || mult !== 1 || steps !== 100;
+
+    indicator.classList.toggle('show', isModified);
+}
+
+// Update preview value displays
+function updatePreviewValues(param) {
+    ['X', 'Y'].forEach(axis => {
+        const startPreview = document.getElementById(`${param}${axis}PreviewStart`);
+        const endPreview = document.getElementById(`${param}${axis}PreviewEnd`);
+        const key = `${param}${axis}`;
+
+        if (startPreview && state[key]) {
+            startPreview.textContent = formatPreviewValue(param, state[key].start);
+        }
+        if (endPreview && state[key]) {
+            endPreview.textContent = formatPreviewValue(param, state[key].end);
+        }
+    });
+}
+
+function formatPreviewValue(param, value) {
+    if (param === 'rotation') return `${Math.round(value)}°`;
+    if (param === 'weight') return value.toFixed(1);
+    return `${Math.round(value)}%`;
 }
 
 function setupColorSystem() {
