@@ -1,5 +1,5 @@
 /* =========================================
-   VECTOR.LAB — 80s Pattern Generator
+   p5.js playground
    ========================================= */
 
 :root {
@@ -33,6 +33,17 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
+}
+
+/* Hide number input spinners */
+input[type=number]::-webkit-inner-spin-button,
+input[type=number]::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type=number] {
+    -moz-appearance: textfield;
 }
 
 html {
@@ -470,6 +481,98 @@ body {
 
 .advanced-panel.hidden {
     display: none;
+}
+
+/* Always Visible Advanced Controls (NEW) */
+.advanced-controls-visible {
+    margin-top: 8px;
+}
+
+.advanced-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.fade-group {
+    flex: 1;
+    min-width: 80px;
+}
+
+/* Dual Slider Mini - for fade position */
+.dual-slider-mini {
+    position: relative;
+    height: 10px;
+    flex: 1;
+    min-width: 50px;
+}
+
+.dual-slider-mini .slider-track {
+    position: absolute;
+    top: 4px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--bg-input);
+    border-radius: 1px;
+}
+
+.dual-slider-mini .slider-range {
+    position: absolute;
+    top: 4px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent), var(--accent-secondary));
+    border-radius: 1px;
+}
+
+.dual-slider-mini .pos-slider-dual {
+    position: absolute;
+    width: 100%;
+    height: 10px;
+    -webkit-appearance: none;
+    background: transparent;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.dual-slider-mini .pos-slider-dual::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    cursor: pointer;
+    pointer-events: all;
+    border: 1px solid var(--bg-sidebar);
+}
+
+.dual-slider-mini input:first-of-type::-webkit-slider-thumb {
+    background: var(--accent);
+}
+
+.dual-slider-mini input:last-of-type::-webkit-slider-thumb {
+    background: var(--accent-secondary);
+}
+
+/* Inline Dual Slider (between inputs) */
+.dual-slider.inline {
+    flex: 1;
+    min-width: 60px;
+    height: 14px;
+}
+
+.range-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.range-inputs .value-input {
+    width: 22px;
+    flex-shrink: 0;
+    padding: 1px 0;
+    font-size: 9px;
+    text-align: center;
 }
 
 .advanced-controls-row {
@@ -1143,15 +1246,53 @@ body {
     background: rgba(255, 107, 53, 0.1);
 }
 
-.layer-visibility {
-    font-size: 10px;
-    color: var(--text-muted);
+.layer-vis {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
     cursor: pointer;
-    width: 14px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    transition: all var(--transition);
+    flex-shrink: 0;
 }
 
-.layer-visibility.visible {
-    color: var(--accent);
+.layer-vis.on {
+    background: var(--accent);
+    border-color: var(--accent);
+    box-shadow: 0 0 8px var(--accent);
+}
+
+.layer-order {
+    display: flex;
+    gap: 2px;
+    margin-left: auto;
+}
+
+.layer-up,
+.layer-down {
+    width: 16px;
+    height: 14px;
+    font-size: 9px;
+    background: var(--bg-input);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.layer-up:hover:not(:disabled),
+.layer-down:hover:not(:disabled) {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.layer-up:disabled,
+.layer-down:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
 }
 
 .layer-info {
